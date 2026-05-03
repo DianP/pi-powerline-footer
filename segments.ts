@@ -75,6 +75,7 @@ const shellModeSegment: StatusLineSegment = {
       return { content: "", visible: false };
     }
 
+    const icons = getIcons();
     const shellName = ctx.shellName ?? "shell";
     const state = ctx.shellRunning ? "run" : "idle";
     const cwd = ctx.shellCwd ? basename(ctx.shellCwd) : null;
@@ -83,7 +84,7 @@ const shellModeSegment: StatusLineSegment = {
       parts.push(cwd);
     }
 
-    return { content: color(ctx, "shellMode", parts.join(SEP_DOT)), visible: true };
+    return { content: color(ctx, "shellMode", withIcon(icons.shell, parts.join(SEP_DOT))), visible: true };
   },
 };
 
@@ -180,6 +181,7 @@ const gitSegment: StatusLineSegment = {
 const thinkingSegment: StatusLineSegment = {
   id: "thinking",
   render(ctx) {
+    const icons = getIcons();
     const level = ctx.thinkingLevel || "off";
 
     const levelText: Record<string, string> = {
@@ -191,7 +193,7 @@ const thinkingSegment: StatusLineSegment = {
       xhigh: "xhigh",
     };
     const label = levelText[level] || level;
-    const content = `think:${label}`;
+    const content = withIcon(icons.thinking, label);
 
     if (level === "high" || level === "xhigh") {
       return { content: rainbow(content), visible: true };
@@ -253,7 +255,32 @@ const tokenTotalSegment: StatusLineSegment = {
     const total = input + output + cacheRead + cacheWrite;
     if (!total) return { content: "", visible: false };
 
-    const content = withIcon(icons.tokens, formatTokens(total));
+    const content = withIcon(icons.cache, formatTokens(total));
+    return { content: color(ctx, "tokens", content), visible: true };
+  },
+};
+
+const tokenIoSegment: StatusLineSegment = {
+  id: "token_io",
+  render(ctx) {
+    const icons = getIcons();
+    const { input, output } = ctx.usageStats;
+    const total = input + output;
+    if (!total) return { content: "", visible: false };
+
+    const content = withIcon(icons.tokenIo, formatTokens(total));
+    return { content: color(ctx, "tokens", content), visible: true };
+  },
+};
+
+const tokenRateSegment: StatusLineSegment = {
+  id: "token_rate",
+  render(ctx) {
+    const icons = getIcons();
+    const rate = ctx.tokenRate;
+    if (!rate) return { content: "", visible: false };
+
+    const content = withIcon(icons.tokenRate, `${formatTokens(Math.round(rate))}/s`);
     return { content: color(ctx, "tokens", content), visible: true };
   },
 };
@@ -261,6 +288,7 @@ const tokenTotalSegment: StatusLineSegment = {
 const costSegment: StatusLineSegment = {
   id: "cost",
   render(ctx) {
+    const icons = getIcons();
     const { cost } = ctx.usageStats;
     const usingSubscription = ctx.usingSubscription;
 
@@ -268,8 +296,8 @@ const costSegment: StatusLineSegment = {
       return { content: "", visible: false };
     }
 
-    const costDisplay = usingSubscription ? "(sub)" : `$${cost.toFixed(2)}`;
-    return { content: color(ctx, "cost", costDisplay), visible: true };
+    const costDisplay = usingSubscription ? "sub" : cost.toFixed(2);
+    return { content: color(ctx, "cost", withIcon(icons.cost, costDisplay)), visible: true };
   },
 };
 
@@ -283,19 +311,20 @@ const contextPctSegment: StatusLineSegment = {
     const window = ctx.contextWindow;
 
     const autoIcon = ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
-    const text = `${pct.toFixed(1)}%/${formatTokens(window)}${autoIcon}`;
+    const pctText = window > 0
+      ? `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%/${formatTokens(window)}`
+      : "?";
+    const text = `${pctText}${autoIcon}`;
+    const content = withIcon(icons.context, text);
 
-    // Icon outside color, text inside - use semantic colors for thresholds
-    let content: string;
     if (pct > 90) {
-      content = withIcon(icons.context, color(ctx, "contextError", text));
-    } else if (pct > 70) {
-      content = withIcon(icons.context, color(ctx, "contextWarn", text));
-    } else {
-      content = withIcon(icons.context, color(ctx, "context", text));
+      return { content: color(ctx, "contextError", content), visible: true };
+    }
+    if (pct > 70) {
+      return { content: color(ctx, "contextWarn", content), visible: true };
     }
 
-    return { content, visible: true };
+    return { content: color(ctx, "context", content), visible: true };
   },
 };
 
@@ -322,7 +351,7 @@ const timeSpentSegment: StatusLineSegment = {
     const elapsed = Date.now() - ctx.sessionStartTime;
     if (elapsed < 1000) return { content: "", visible: false };
 
-    return { content: withIcon(icons.time, formatDuration(elapsed)), visible: true };
+    return { content: color(ctx, "muted", withIcon(icons.time, formatDuration(elapsed))), visible: true };
   },
 };
 
@@ -347,7 +376,7 @@ const timeSegment: StatusLineSegment = {
     }
     timeStr += suffix;
 
-    return { content: withIcon(icons.time, timeStr), visible: true };
+    return { content: color(ctx, "dim", withIcon(icons.time, timeStr)), visible: true };
   },
 };
 
@@ -358,16 +387,16 @@ const sessionSegment: StatusLineSegment = {
     const sessionId = ctx.sessionId;
     const display = sessionId?.slice(0, 8) || "new";
 
-    return { content: withIcon(icons.session, display), visible: true };
+    return { content: color(ctx, "muted", withIcon(icons.session, display)), visible: true };
   },
 };
 
 const hostnameSegment: StatusLineSegment = {
   id: "hostname",
-  render() {
+  render(ctx) {
     const icons = getIcons();
     const name = osHostname().split(".")[0];
-    return { content: withIcon(icons.host, name), visible: true };
+    return { content: color(ctx, "dim", withIcon(icons.host, name)), visible: true };
   },
 };
 
@@ -430,14 +459,16 @@ const extensionStatusesSegment: StatusLineSegment = {
 
 export const SEGMENTS: Record<BuiltinStatusLineSegmentId, StatusLineSegment> = {
   model: modelSegment,
+  thinking: thinkingSegment,
   shell_mode: shellModeSegment,
   path: pathSegment,
   git: gitSegment,
-  thinking: thinkingSegment,
   subagents: subagentsSegment,
   token_in: tokenInSegment,
   token_out: tokenOutSegment,
   token_total: tokenTotalSegment,
+  token_io: tokenIoSegment,
+  token_rate: tokenRateSegment,
   cost: costSegment,
   context_pct: contextPctSegment,
   context_total: contextTotalSegment,

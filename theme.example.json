@@ -1,23 +1,27 @@
 {
   "colors": {
-    "model": "#d787af",
-    "shellMode": "accent",
-    "path": "#00afaf",
+    "model": "accent",
+    "shellMode": "bashMode",
+    "path": "text",
     "gitDirty": "warning",
     "gitClean": "success",
     "thinking": "thinkingOff",
     "thinkingMinimal": "thinkingMinimal",
     "thinkingLow": "thinkingLow",
     "thinkingMedium": "thinkingMedium",
-    "context": "dim",
+    "context": "muted",
     "contextWarn": "warning",
     "contextError": "error",
-    "cost": "text",
+    "cost": "muted",
     "tokens": "muted",
     "separator": "dim",
-    "border": "borderMuted"
+    "border": "borderMuted",
+    "muted": "muted",
+    "dim": "dim"
   },
   "icons": {
+    "shell": "",
+    "thinking": "",
     "auto": "↯",
     "warning": ""
   }

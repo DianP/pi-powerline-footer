@@ -16,6 +16,10 @@ export interface IconSet {
   output: string;
   host: string;
   session: string;
+  shell: string;
+  thinking: string;
+  tokenIo: string;
+  tokenRate: string;
   auto: string;
   warning: string;
 }
@@ -66,6 +70,10 @@ export const NERD_ICONS: IconSet = {
   output: "\uF08B",     // nf-fa-sign_out (output arrow)
   host: "\uF109",       // nf-fa-laptop (host)
   session: "\uF550",    // nf-md-identifier (session id)
+  shell: "\uF489",      // nf-md-console (shell mode)
+  thinking: "\uF0EB",   // nf-fa-lightbulb_o (reasoning/thinking)
+  tokenIo: "\uF0EC",    // nf-fa-exchange (I/O arrows)
+  tokenRate: "\uF0E7",  // nf-fa-bolt (speed/rate)
   auto: "\u{F0068}",    // nf-md-lightning_bolt (auto-compact)
   warning: "\uF071",    // nf-fa-warning
 };
@@ -87,6 +95,10 @@ export const ASCII_ICONS: IconSet = {
   output: "out:",
   host: "host",
   session: "id",
+  shell: "sh",
+  thinking: "think",
+  tokenIo: "io",
+  tokenRate: "t/s",
   auto: "AC",
   warning: "!",
 };

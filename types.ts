@@ -21,7 +21,9 @@ export type SemanticColor =
   | "cost"
   | "tokens"
   | "separator"
-  | "border";
+  | "border"
+  | "muted"
+  | "dim";
 
 // Color scheme mapping semantic names to actual colors
 export type ColorScheme = Partial<Record<SemanticColor, ColorValue>>;
@@ -36,6 +38,8 @@ export type BuiltinStatusLineSegmentId =
   | "token_in"
   | "token_out"
   | "token_total"
+  | "token_io"
+  | "token_rate"
   | "cost"
   | "context_pct"
   | "context_total"
@@ -168,6 +172,9 @@ export interface SegmentContext {
   // Options
   options: StatusLineSegmentOptions;
   
+  // Token rate (computed from last assistant message)
+  tokenRate: number | null;
+
   // Theming
   theme: ThemeLike;
   colors: ColorScheme;

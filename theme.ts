@@ -18,11 +18,41 @@ export interface PowerlineThemeConfig {
   icons?: unknown;
 }
 
-// Default color scheme (uses pi theme colors)
+// Default color scheme
+// Uses pi theme tokens so the footer integrates with the active shell/terminal theme.
+// Visual hierarchy: important info (model, path) is prominent, secondary info (tokens, cost) is subtle.
 const DEFAULT_COLORS: Required<ColorScheme> = {
-  model: "#d787af",  // Pink/mauve (matching original colors.ts)
+  model: "accent",         // Prominent — uses theme accent for the model name
+  shellMode: "bashMode",   // Thematic — uses the shell mode color from the active theme
+  path: "text",            // Clean, readable, adapts to any theme
+  gitDirty: "warning",     // Standard warning for dirty state
+  gitClean: "success",     // Standard success for clean state
+  thinking: "thinkingOff",
+  thinkingMinimal: "thinkingMinimal",
+  thinkingLow: "thinkingLow",
+  thinkingMedium: "thinkingMedium",
+  context: "muted",        // Readable secondary info — more visible than "dim"
+  contextWarn: "warning",
+  contextError: "error",
+  cost: "muted",           // Subtle — cost is secondary info
+  tokens: "muted",         // Subtle — token counts are secondary info
+  separator: "dim",        // Very subtle separators
+  border: "borderMuted",   // Subtle border
+  muted: "muted",          // Generic muted/secondary text — resolved from theme
+  dim: "dim",              // Generic dim/subtle text — resolved from theme
+};
+
+// Rainbow colors for high thinking levels (Catppuccin Mocha gradient)
+const RAINBOW_COLORS = [
+  "#cba6f7", "#f5c2e7", "#f38ba8", "#fab387",
+  "#f9e2af", "#a6e3a1", "#94e2d5", "#89b4fa",
+];
+
+// Default color scheme (Catppuccin Mocha) — used as hardcoded fallback when theme tokens resolve to empty
+const FALLBACK_COLORS: Required<ColorScheme> = {
+  model: "#cba6f7",  // Catppuccin Mocha Mauve
   shellMode: "accent",
-  path: "#00afaf",  // Teal/cyan (matching original colors.ts)
+  path: "#94e2d5",  // Catppuccin Mocha Teal
   gitDirty: "warning",
   gitClean: "success",
   thinking: "thinkingOff",
@@ -36,13 +66,9 @@ const DEFAULT_COLORS: Required<ColorScheme> = {
   tokens: "muted",
   separator: "dim",
   border: "borderMuted",
+  muted: "muted",
+  dim: "dim",
 };
-
-// Rainbow colors for high thinking levels
-const RAINBOW_COLORS = [
-  "#b281d6", "#d787af", "#febc38", "#e4c00f", 
-  "#89d281", "#00afaf", "#178fb9", "#b281d6",
-];
 
 // Cache for user theme overrides
 let userThemeCache: ColorScheme | null = null;
@@ -131,6 +157,8 @@ function loadUserTheme(): ColorScheme {
 
 /**
  * Resolve a semantic color to an actual color value
+ *
+ * Priority: user overrides > preset colors > theme tokens > hardcoded fallback
  */
 export function resolveColor(
   semantic: SemanticColor,
@@ -138,10 +166,10 @@ export function resolveColor(
 ): ColorValue {
   const userTheme = loadUserTheme();
   
-  // Priority: user overrides > preset colors > defaults
   return userTheme[semantic] 
     ?? presetColors?.[semantic] 
-    ?? DEFAULT_COLORS[semantic];
+    ?? DEFAULT_COLORS[semantic]
+    ?? FALLBACK_COLORS[semantic];
 }
 
 /**

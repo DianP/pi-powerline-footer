@@ -42,20 +42,31 @@ function createSegmentContext(thinkingLevel: string, colors: ColorScheme): Segme
 }
 
 test("thinking segment uses per-level colors for off through medium", () => {
-  const colors: ColorScheme = {
-    thinking: "#111111",
-    thinkingMinimal: "#222222",
-    thinkingLow: "#333333",
-    thinkingMedium: "#444444",
-  };
+  const previousNerdFontSetting = process.env.POWERLINE_NERD_FONTS;
+  process.env.POWERLINE_NERD_FONTS = "0";
 
-  const off = renderSegment("thinking", createSegmentContext("off", colors));
-  const minimal = renderSegment("thinking", createSegmentContext("minimal", colors));
-  const low = renderSegment("thinking", createSegmentContext("low", colors));
-  const medium = renderSegment("thinking", createSegmentContext("medium", colors));
+  try {
+    const colors: ColorScheme = {
+      thinking: "#111111",
+      thinkingMinimal: "#222222",
+      thinkingLow: "#333333",
+      thinkingMedium: "#444444",
+    };
 
-  assert.equal(off.content, `${hexAnsi("#111111")}think:off\x1b[0m`);
-  assert.equal(minimal.content, `${hexAnsi("#222222")}think:min\x1b[0m`);
-  assert.equal(low.content, `${hexAnsi("#333333")}think:low\x1b[0m`);
-  assert.equal(medium.content, `${hexAnsi("#444444")}think:med\x1b[0m`);
+    const off = renderSegment("thinking", createSegmentContext("off", colors));
+    const minimal = renderSegment("thinking", createSegmentContext("minimal", colors));
+    const low = renderSegment("thinking", createSegmentContext("low", colors));
+    const medium = renderSegment("thinking", createSegmentContext("medium", colors));
+
+    assert.equal(off.content, `${hexAnsi("#111111")}think off\x1b[0m`);
+    assert.equal(minimal.content, `${hexAnsi("#222222")}think min\x1b[0m`);
+    assert.equal(low.content, `${hexAnsi("#333333")}think low\x1b[0m`);
+    assert.equal(medium.content, `${hexAnsi("#444444")}think med\x1b[0m`);
+  } finally {
+    if (previousNerdFontSetting === undefined) {
+      delete process.env.POWERLINE_NERD_FONTS;
+    } else {
+      process.env.POWERLINE_NERD_FONTS = previousNerdFontSetting;
+    }
+  }
 });

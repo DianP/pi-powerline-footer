@@ -4,29 +4,35 @@ import { getDefaultColors } from "./theme.js";
 // Get base colors from theme.ts (single source of truth)
 const DEFAULT_COLORS: ColorScheme = getDefaultColors();
 
-// Minimal - more muted, less colorful
+// Minimal - muted, less colorful, clean and unobtrusive
 const MINIMAL_COLORS: ColorScheme = {
   ...DEFAULT_COLORS,
-  model: "text",
-  path: "text",
+  model: "muted",
+  path: "muted",
   gitClean: "dim",
+  gitDirty: "muted",
+  context: "dim",
+  cost: "dim",
+  tokens: "dim",
 };
 
-// Nerd - vibrant colors
+// Nerd - vibrant colors with high contrast
 const NERD_COLORS: ColorScheme = {
   ...DEFAULT_COLORS,
   model: "accent",
   path: "success",
-  tokens: "muted",
+  gitDirty: "error",
+  gitClean: "success",
+  tokens: "text",
   cost: "warning",
+  context: "muted",
 };
 
 export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   default: {
-    leftSegments: ["model", "thinking", "shell_mode", "path", "git", "context_pct", "cache_read", "cost"],
-    rightSegments: [],
-    secondarySegments: ["extension_statuses"],
-    separator: "powerline-thin",
+    leftSegments: ["path", "git", "model", "thinking", "shell_mode"],
+    rightSegments: ["token_in", "token_out", "context_pct", "cost"],
+    separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
@@ -36,9 +42,9 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   },
 
   minimal: {
-    leftSegments: ["shell_mode", "path", "git"],
+    leftSegments: ["model", "path"],
     rightSegments: ["context_pct"],
-    separator: "slash",
+    separator: "dot",
     colors: MINIMAL_COLORS,
     segmentOptions: {
       path: { mode: "basename" },
@@ -49,7 +55,7 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   compact: {
     leftSegments: ["model", "shell_mode", "git"],
     rightSegments: ["cost", "context_pct"],
-    separator: "powerline-thin",
+    separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
@@ -58,9 +64,9 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   },
 
   full: {
-    leftSegments: ["hostname", "model", "thinking", "shell_mode", "path", "git", "subagents"],
-    rightSegments: ["token_in", "token_out", "cache_read", "cost", "context_pct", "time_spent", "time", "extension_statuses"],
-    separator: "powerline",
+    leftSegments: ["path", "git", "model", "thinking", "shell_mode", "subagents"],
+    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "token_rate", "context_pct", "cost", "time"],
+    separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
@@ -71,9 +77,9 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   },
 
   nerd: {
-    leftSegments: ["hostname", "model", "thinking", "shell_mode", "path", "git", "session", "subagents"],
-    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "cost", "context_pct", "context_total", "time_spent", "time", "extension_statuses"],
-    separator: "powerline",
+    leftSegments: ["path", "git", "session", "model", "thinking", "shell_mode", "subagents"],
+    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "token_rate", "context_pct", "cost", "time"],
+    separator: "dot",
     colors: NERD_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
@@ -84,7 +90,7 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   },
 
   ascii: {
-    leftSegments: ["model", "shell_mode", "path", "git"],
+    leftSegments: ["model", "path", "git"],
     rightSegments: ["token_total", "cost", "context_pct"],
     separator: "ascii",
     colors: MINIMAL_COLORS,
@@ -96,9 +102,9 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   },
 
   custom: {
-    leftSegments: ["model", "shell_mode", "path", "git"],
-    rightSegments: ["token_total", "cost", "context_pct"],
-    separator: "powerline-thin",
+    leftSegments: ["path", "git", "model", "thinking", "shell_mode"],
+    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "context_pct", "cost", "time"],
+    separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {},
   },

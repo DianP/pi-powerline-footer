@@ -1,5 +1,5 @@
 // ANSI escape codes for colors
-// Matching oh-my-pi dark theme colors exactly
+// Catppuccin Mocha palette (matching terminal theme)
 
 export interface AnsiColors {
   getBgAnsi(r: number, g: number, b: number): string;
@@ -27,11 +27,11 @@ function hexToRgb(hex: string): [number, number, number] {
 
 // Colors used by welcome/editor chrome rendering
 const THEME = {
-  sep: 244,               // ANSI 256 gray
-  model: "#d787af",       // Pink/mauve
-  path: "#00afaf",        // Teal/cyan
-  gitClean: "#5faf5f",    // Green
-  accent: "#febc38",      // Orange
+  sep: "#6c7086",         // Catppuccin Mocha Overlay0
+  model: "#cba6f7",       // Catppuccin Mocha Mauve
+  path: "#94e2d5",        // Catppuccin Mocha Teal
+  gitClean: "#a6e3a1",    // Catppuccin Mocha Green
+  accent: "#f9e2af",      // Catppuccin Mocha Yellow
 };
 
 // Color name to ANSI code mapping

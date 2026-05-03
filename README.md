@@ -67,11 +67,11 @@ Use `"fixedEditor": true` to enable it again. Add `"mouseScroll": false` if you 
 
 | Preset | Description |
 |--------|-------------|
-| `default` | Model, thinking, path (basename), git, context, tokens, cost |
-| `minimal` | Just path (basename), git, context |
-| `compact` | Model, git, cost, context |
-| `full` | Everything including hostname, time, abbreviated path |
-| `nerd` | Maximum detail for Nerd Font users |
+| `default` | Clean two-column bar: model/path/git left, in/out/rate/total/context/cost right |
+| `minimal` | Path/git left, context right |
+| `compact` | Model/git left, cost/context right |
+| `full` | Two-column detail view with hostname, time, abbreviated path |
+| `nerd` | Maximum icon detail for Nerd Font users |
 | `ascii` | Safe for any terminal |
 
 **Environment:** `POWERLINE_NERD_FONTS=1` to force Nerd Fonts, `=0` for ASCII.
@@ -321,7 +321,7 @@ Configure via preset options: `path: { mode: "full" }`
 
 ## Segments
 
-`model` · `thinking` · `shell_mode` · `path` · `git` · `subagents` · `token_in` · `token_out` · `token_total` · `cost` · `context_pct` · `context_total` · `time_spent` · `time` · `session` · `hostname` · `cache_read` · `cache_write`
+`model` · `thinking` · `shell_mode` · `path` · `git` · `subagents` · `token_in` · `token_out` · `token_total` · `token_io` · `token_rate` · `cost` · `context_pct` · `context_total` · `time_spent` · `time` · `session` · `hostname` · `cache_read` · `cache_write` · `extension_statuses`
 
 ## Separators
 
@@ -335,9 +335,9 @@ Colors are configurable via pi's theme system. Each preset defines its own color
 
 | Semantic | Theme Color | Description |
 |----------|-------------|-------------|
-| `model` | `#d787af` | Model name |
+| `model` | `#cba6f7` | Model name |
 | `shellMode` | `accent` | Bash mode segment |
-| `path` | `#00afaf` | Directory path |
+| `path` | `#94e2d5` | Directory path |
 | `gitClean` | `success` | Git branch (clean) |
 | `gitDirty` | `warning` | Git branch (dirty) |
 | `thinking` | `thinkingOff` | Thinking level (`off`) |
@@ -357,10 +357,9 @@ Create `~/.pi/agent/extensions/powerline-footer/theme.json`:
 ```json
 {
   "colors": {
-    "pi": "#ff5500",
-    "model": "accent",
+    "model": "#cba6f7",
     "shellMode": "accent",
-    "path": "#00afaf",
+    "path": "#94e2d5",
     "gitClean": "success",
     "thinking": "thinkingOff",
     "thinkingMinimal": "thinkingMinimal",
@@ -368,6 +367,8 @@ Create `~/.pi/agent/extensions/powerline-footer/theme.json`:
     "thinkingMedium": "thinkingMedium"
   },
   "icons": {
+    "shell": "",
+    "thinking": "",
     "auto": "↯",
     "warning": ""
   }

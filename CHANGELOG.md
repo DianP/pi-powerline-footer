@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- **Fixed-editor working indicator placement** — Pi's native spinning working/status line now renders on the same bottom row as the last-prompt history when available, or as the bottom-left row under the input border otherwise.
+
 ## [0.5.1] - 2026-05-02
 
 ### Fixed

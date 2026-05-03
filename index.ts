@@ -25,11 +25,12 @@ import { ManagedShellSession } from "./bash-mode/shell-session.ts";
 import { matchHistoryEntries, readGlobalShellHistory, readProjectHistory, appendProjectHistory } from "./bash-mode/history.ts";
 import type { BashModeSettings } from "./bash-mode/types.ts";
 import { getPreset, PRESETS } from "./presets.js";
-import { collectHiddenExtensionStatusKeys, getNotificationExtensionStatuses, mergeSegmentsWithCustomItems, nextPowerlineSettingWithOptions, nextPowerlineSettingWithPreset, parsePowerlineConfig } from "./powerline-config.js";
+import { collectHiddenExtensionStatusKeys, mergeSegmentsWithCustomItems, nextPowerlineSettingWithOptions, nextPowerlineSettingWithPreset, normalizeExtensionStatusValue, parsePowerlineConfig } from "./powerline-config.js";
 import { getSeparator } from "./separators.js";
 import { renderSegment } from "./segments.js";
 import { getGitStatus, invalidateGitStatus, invalidateGitBranch } from "./git-status.js";
 import { ansi, getFgAnsiCode } from "./colors.js";
+import { SEP_DOT } from "./icons.ts";
 import { WelcomeComponent, WelcomeHeader, discoverLoadedCounts, getRecentSessions } from "./welcome.js";
 import { createWelcomeDismissScheduler } from "./welcome-dismiss.ts";
 import { createRenderScheduler } from "./render-scheduler.ts";
@@ -859,8 +860,16 @@ function renderSegmentWithWidth(
   return { content: rendered.content, width: visibleWidth(rendered.content), visible: true };
 }
 
-/** Build content string from pre-rendered parts */
-function buildContentFromParts(
+type LayoutSegment = { content: string; width: number };
+
+const JUSTIFY_MIN_GAP = 2;
+
+function segmentSeparatorWidth(presetDef: ReturnType<typeof getPreset>): number {
+  const separatorDef = getSeparator(presetDef.separator);
+  return visibleWidth(separatorDef.left) + 2; // separator + spaces around it
+}
+
+function buildGroupContentFromParts(
   parts: string[],
   presetDef: ReturnType<typeof getPreset>
 ): string {
@@ -868,79 +877,162 @@ function buildContentFromParts(
   const separatorDef = getSeparator(presetDef.separator);
   const sepAnsi = getFgAnsiCode("sep");
   const sep = separatorDef.left;
-  return " " + parts.join(` ${sepAnsi}${sep}${ansi.reset} `) + ansi.reset + " ";
+  return parts.join(` ${sepAnsi}${sep}${ansi.reset} `);
+}
+
+/** Build a left-aligned content row from pre-rendered parts. */
+function buildContentFromParts(
+  parts: string[],
+  presetDef: ReturnType<typeof getPreset>
+): string {
+  const content = buildGroupContentFromParts(parts, presetDef);
+  return content ? ` ${content}${ansi.reset} ` : "";
+}
+
+function groupContentWidth(segments: readonly LayoutSegment[], presetDef: ReturnType<typeof getPreset>): number {
+  if (segments.length === 0) return 0;
+  return segments.reduce((sum, segment) => sum + segment.width, 0)
+    + segmentSeparatorWidth(presetDef) * (segments.length - 1);
+}
+
+function topContentWidth(
+  leftSegments: readonly LayoutSegment[],
+  rightSegments: readonly LayoutSegment[],
+  presetDef: ReturnType<typeof getPreset>,
+): number {
+  if (leftSegments.length === 0 && rightSegments.length === 0) return 0;
+
+  const leftWidth = groupContentWidth(leftSegments, presetDef);
+  const rightWidth = groupContentWidth(rightSegments, presetDef);
+  const paddingWidth = 2;
+
+  if (leftSegments.length === 0 || rightSegments.length === 0) {
+    return leftWidth + rightWidth + paddingWidth;
+  }
+
+  return leftWidth + rightWidth + JUSTIFY_MIN_GAP + paddingWidth;
+}
+
+function buildJustifiedTopContent(
+  leftSegments: readonly LayoutSegment[],
+  rightSegments: readonly LayoutSegment[],
+  presetDef: ReturnType<typeof getPreset>,
+  availableWidth: number,
+): string {
+  const left = buildGroupContentFromParts(leftSegments.map((segment) => segment.content), presetDef);
+  const right = buildGroupContentFromParts(rightSegments.map((segment) => segment.content), presetDef);
+
+  if (!left && !right) return "";
+
+  const leftWidth = visibleWidth(left);
+  const rightWidth = visibleWidth(right);
+
+  if (left && right) {
+    const gapWidth = Math.max(JUSTIFY_MIN_GAP, availableWidth - leftWidth - rightWidth - 2);
+    return ` ${left}${" ".repeat(gapWidth)}${right}${ansi.reset} `;
+  }
+
+  if (right) {
+    const leadingWidth = Math.max(1, availableWidth - rightWidth - 1);
+    return `${" ".repeat(leadingWidth)}${right}${ansi.reset} `;
+  }
+
+  return ` ${left}${ansi.reset} `;
+}
+
+function renderSegmentsWithWidth(segIds: readonly StatusLineSegmentId[], ctx: SegmentContext): LayoutSegment[] {
+  const segments: LayoutSegment[] = [];
+  for (const segId of segIds) {
+    const { content, width, visible } = renderSegmentWithWidth(segId, ctx);
+    if (visible) {
+      segments.push({ content, width });
+    }
+  }
+  return segments;
+}
+
+function fitSegmentsIntoRow(
+  segments: readonly LayoutSegment[],
+  presetDef: ReturnType<typeof getPreset>,
+  availableWidth: number,
+): LayoutSegment[] {
+  const selected: LayoutSegment[] = [];
+  const baseOverhead = 2;
+  const sepWidth = segmentSeparatorWidth(presetDef);
+  let currentWidth = baseOverhead;
+
+  for (const segment of segments) {
+    const neededWidth = segment.width + (selected.length > 0 ? sepWidth : 0);
+    if (currentWidth + neededWidth > availableWidth) {
+      break;
+    }
+
+    selected.push(segment);
+    currentWidth += neededWidth;
+  }
+
+  return selected;
 }
 
 /**
- * Responsive segment layout - fits segments into top bar, overflows to secondary row.
- * When terminal is wide enough, secondary segments move up to top bar.
- * When narrow, top bar segments overflow down to secondary row.
+ * Responsive two-column status layout.
+ * The top row honors preset left/right groups and justifies them between edges.
+ * When space is tight, less-important primary segments wrap to the secondary row.
  */
 function computeResponsiveLayout(
   ctx: SegmentContext,
   presetDef: ReturnType<typeof getPreset>,
   availableWidth: number
 ): { topContent: string; secondaryContent: string } {
-  const separatorDef = getSeparator(presetDef.separator);
-  const sepWidth = visibleWidth(separatorDef.left) + 2; // separator + spaces around it
-  
-  // Get all segments: primary first, then secondary
-  const mergedSegments = mergeSegmentsWithCustomItems(presetDef, config.customItems);
-  const primaryIds = [...mergedSegments.leftSegments, ...mergedSegments.rightSegments];
-  const secondaryIds = mergedSegments.secondarySegments;
-  const allSegmentIds = [...primaryIds, ...secondaryIds];
-  
-  // Render all segments and get their widths
-  const renderedSegments: { content: string; width: number }[] = [];
-  for (const segId of allSegmentIds) {
-    const { content, width, visible } = renderSegmentWithWidth(segId, ctx);
-    if (visible) {
-      renderedSegments.push({ content, width });
-    }
-  }
-  
-  if (renderedSegments.length === 0) {
+  if (availableWidth <= 0) {
     return { topContent: "", secondaryContent: "" };
   }
-  
-  // Calculate how many segments fit in top bar
-  // Account for: leading space (1) + trailing space (1) = 2 chars overhead
-  const baseOverhead = 2;
-  let currentWidth = baseOverhead;
-  let topSegments: string[] = [];
-  let overflowSegments: { content: string; width: number }[] = [];
-  let overflow = false;
-  
-  for (const seg of renderedSegments) {
-    const neededWidth = seg.width + (topSegments.length > 0 ? sepWidth : 0);
-    
-    if (!overflow && currentWidth + neededWidth <= availableWidth) {
-      topSegments.push(seg.content);
-      currentWidth += neededWidth;
-    } else {
-      overflow = true;
-      overflowSegments.push(seg);
+
+  const mergedSegments = mergeSegmentsWithCustomItems(presetDef, config.customItems);
+  const topLeftSegments = renderSegmentsWithWidth(mergedSegments.leftSegments, ctx);
+  const topRightSegments = renderSegmentsWithWidth(mergedSegments.rightSegments, ctx);
+  const secondaryBaseSegments = renderSegmentsWithWidth(mergedSegments.secondarySegments, ctx);
+
+  const overflowLeftSegments: LayoutSegment[] = [];
+  const overflowRightSegments: LayoutSegment[] = [];
+
+  while (
+    topContentWidth(topLeftSegments, topRightSegments, presetDef) > availableWidth
+    && (topLeftSegments.length > 0 || topRightSegments.length > 0)
+  ) {
+    if (topLeftSegments.length > 1) {
+      overflowLeftSegments.unshift(topLeftSegments.pop()!);
+      continue;
     }
-  }
-  
-  // Fit overflow segments into secondary row (same width constraint)
-  // Stop at first non-fitting segment to preserve ordering
-  let secondaryWidth = baseOverhead;
-  let secondarySegments: string[] = [];
-  
-  for (const seg of overflowSegments) {
-    const neededWidth = seg.width + (secondarySegments.length > 0 ? sepWidth : 0);
-    if (secondaryWidth + neededWidth <= availableWidth) {
-      secondarySegments.push(seg.content);
-      secondaryWidth += neededWidth;
-    } else {
-      break;
+
+    if (topRightSegments.length > 1) {
+      // Keep the last right segment (usually context) visible as long as possible.
+      overflowRightSegments.push(topRightSegments.shift()!);
+      continue;
     }
+
+    if (topLeftSegments.length > 0 && topRightSegments.length > 0) {
+      overflowLeftSegments.unshift(topLeftSegments.pop()!);
+      continue;
+    }
+
+    if (topRightSegments.length > 0) {
+      overflowRightSegments.push(topRightSegments.shift()!);
+      continue;
+    }
+
+    overflowLeftSegments.unshift(topLeftSegments.pop()!);
   }
-  
+
+  const secondarySegments = fitSegmentsIntoRow(
+    [...overflowLeftSegments, ...overflowRightSegments, ...secondaryBaseSegments],
+    presetDef,
+    availableWidth,
+  );
+
   return {
-    topContent: buildContentFromParts(topSegments, presetDef),
-    secondaryContent: buildContentFromParts(secondarySegments, presetDef),
+    topContent: buildJustifiedTopContent(topLeftSegments, topRightSegments, presetDef, availableWidth),
+    secondaryContent: buildContentFromParts(secondarySegments.map((segment) => segment.content), presetDef),
   };
 }
 
@@ -962,6 +1054,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
   let getThinkingLevelFn: (() => string) | null = null;
   let currentThinkingLevel: string | null = null;
   let liveAssistantUsage: SessionAssistantUsage | null = null;
+  let persistedTokenRate: number | null = null;
   let isStreaming = false;
   let tuiRef: any = null;
   let restoreFooterStatusRepaintHook: (() => void) | null = null;
@@ -1206,6 +1299,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     shellSession = null;
     sessionGeneration++;
     sessionStartTime = Date.now();
+    persistedTokenRate = null;
     currentCtx = ctx;
     customCompactionEnabled = detectCustomCompactionEnabled(ctx.cwd);
     lastUserPrompt = "";
@@ -1271,6 +1365,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     getThinkingLevelFn = null;
     currentThinkingLevel = null;
     liveAssistantUsage = null;
+    persistedTokenRate = null;
     tuiRef = null;
     currentEditor = null;
     resetLayoutCache();
@@ -1373,6 +1468,15 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         liveAssistantUsage = null;
       } else if (getUsageTokenTotal(event.message.usage) > 0) {
         liveAssistantUsage = event.message.usage;
+        // Compute token rate from completed message (stable, one-shot).
+        // Prefer the API-reported duration when available (more accurate than wall-clock delta).
+        const duration: number | null =
+          typeof event.message.duration === "number" && event.message.duration > 0
+            ? event.message.duration
+            : Date.now() - event.message.timestamp;
+        if (duration !== null && duration >= 100 && event.message.usage.output > 0) {
+          persistedTokenRate = (event.message.usage.output * 1000) / duration;
+        }
       }
     }
     requestImmediateStatusRender({ deferDuringTyping: false });
@@ -2054,34 +2158,25 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     let input = 0, output = 0, cacheRead = 0, cacheWrite = 0, cost = 0;
     let lastAssistant: AssistantMessage | undefined;
     let thinkingLevelFromSession: string | null = null;
-    
+
     const sessionEvents = ctx.sessionManager?.getBranch?.() ?? [];
     for (const e of sessionEvents) {
-      if (!isRecord(e)) {
-        continue;
-      }
+      if (!isRecord(e)) continue;
 
       // Check for thinking level change entries
       if (e.type === "thinking_level_change" && typeof e.thinkingLevel === "string") {
         thinkingLevelFromSession = e.thinkingLevel;
       }
 
-      if (e.type !== "message" || !isSessionAssistantMessage(e.message)) {
-        continue;
-      }
-
+      if (e.type !== "message" || !isSessionAssistantMessage(e.message)) continue;
       const m = e.message;
-      if (m.stopReason === "error" || m.stopReason === "aborted") {
-        continue;
-      }
+      if (m.stopReason === "error" || m.stopReason === "aborted") continue;
       input += m.usage.input;
       output += m.usage.output;
       cacheRead += m.usage.cacheRead;
       cacheWrite += m.usage.cacheWrite;
       cost += m.usage.cost.total;
-      if (getUsageTokenTotal(m.usage) > 0) {
-        lastAssistant = m;
-      }
+      if (getUsageTokenTotal(m.usage) > 0) lastAssistant = m;
     }
 
     // Calculate context percentage.
@@ -2125,6 +2220,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       hiddenExtensionStatusKeys,
       customItemsById,
       options: presetDef.segmentOptions ?? {},
+      tokenRate: persistedTokenRate,
       theme,
       colors,
     };
@@ -2161,24 +2257,6 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     forceNextLayoutRecompute = false;
     
     return lastLayoutResult;
-  }
-
-  function renderPowerlineStatusLines(width: number): string[] {
-    if (!currentCtx || !footerDataRef) return [];
-
-    const statuses = footerDataRef.getExtensionStatuses();
-    if (!statuses || statuses.size === 0) return [];
-    const hiddenExtensionStatusKeys = collectHiddenExtensionStatusKeys(config.customItems);
-
-    const notifications: string[] = [];
-    for (const value of getNotificationExtensionStatuses(statuses, hiddenExtensionStatusKeys)) {
-      const lineContent = ` ${value}`;
-      if (visibleWidth(lineContent) <= width) {
-        notifications.push(lineContent);
-      }
-    }
-
-    return notifications;
   }
 
   function renderPowerlineTopLines(width: number, theme: Theme): string[] {
@@ -2241,6 +2319,27 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     const styledPrompt = `${getFgAnsiCode("sep")}${promptText}${ansi.reset}`;
     const line = `${prefix}${styledPrompt}`;
     return [truncateToWidth(line, width, "…")];
+  }
+
+  function renderBottomBarExtensionStatuses(width: number): string[] {
+    if (!footerDataRef) return [];
+
+    const statuses = footerDataRef.getExtensionStatuses();
+    const hiddenKeys = collectHiddenExtensionStatusKeys(config.customItems);
+    const parts: string[] = [];
+
+    for (const [statusKey, value] of statuses.entries()) {
+      if (hiddenKeys.has(statusKey)) continue;
+      const normalized = value ? normalizeExtensionStatusValue(value) : null;
+      if (normalized) {
+        parts.push(normalized);
+      }
+    }
+
+    if (parts.length === 0) return [];
+
+    const content = parts.join(` ${SEP_DOT} `);
+    return [truncateToWidth(content, width, "…")];
   }
 
   function teardownFixedEditorCompositor(options?: { resetExtendedKeyboardModes?: boolean }) {
@@ -2314,12 +2413,14 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         return renderFixedEditorCluster({
           width,
           terminalRows,
-          statusLines: [...aboveWidgetLines, ...renderPowerlineStatusLines(width), ...statusContainerLines],
+          statusLines: aboveWidgetLines,
           topLines: renderPowerlineTopLines(width, theme),
           editorLines: fixedEditorContainer ? compositor.renderHidden(fixedEditorContainer, width) : [],
           secondaryLines: [...renderPowerlineSecondaryLines(width, theme), ...belowWidgetLines],
           transcriptLines: renderBashTranscriptLines(width, theme),
           lastPromptLines: renderLastPromptLines(width),
+          bottomBarRightLines: renderBottomBarExtensionStatuses(width),
+          bottomStatusLines: statusContainerLines,
         });
       },
     });
@@ -2429,16 +2530,6 @@ export default function powerlineFooter(pi: ExtensionAPI) {
   }
 
   function installPowerlineWidgets(ctx: any) {
-    ctx.ui.setWidget("powerline-status", () => ({
-      dispose() {},
-      invalidate() {
-        requestStatusRender();
-      },
-      render(width: number): string[] {
-        return renderPowerlineStatusLines(width);
-      },
-    }), { placement: "aboveEditor" });
-
     ctx.ui.setWidget("powerline-top", (_tui: any, theme: Theme) => ({
       dispose() {},
       invalidate() {
@@ -2467,13 +2558,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       },
     }), { placement: "belowEditor" });
 
-    ctx.ui.setWidget("powerline-last-prompt", () => ({
-      dispose() {},
-      invalidate() {},
-      render(width: number): string[] {
-        return renderLastPromptLines(width);
-      },
-    }), { placement: "belowEditor" });
+
   }
 
   function setupCustomEditor(ctx: any) {
@@ -2512,7 +2597,6 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     ctx.ui.setWidget("powerline-secondary", undefined);
     ctx.ui.setWidget("powerline-bash-transcript", undefined);
     ctx.ui.setWidget("powerline-status", undefined);
-    ctx.ui.setWidget("powerline-last-prompt", undefined);
 
     let autocompleteFixed = false;
 

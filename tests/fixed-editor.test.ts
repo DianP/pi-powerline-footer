@@ -85,11 +85,65 @@ test("fixed cluster keeps tail status lines when compact", () => {
   const rendered = renderFixedEditorCluster({
     width: 80,
     terminalRows: 3,
-    statusLines: ["above-widget", "powerline-status", "⠏ Shaolin Switchblade Sync..."],
+    statusLines: ["above-widget", "powerline-status", "notification"],
     editorLines: ["edit"],
   });
 
-  assert.deepEqual(rendered.lines, ["⠏ Shaolin Switchblade Sync...", "edit"]);
+  assert.deepEqual(rendered.lines, ["notification", "edit"]);
+});
+
+test("fixed cluster anchors native working status below the input border", () => {
+  const rendered = renderFixedEditorCluster({
+    width: 40,
+    terminalRows: 6,
+    topLines: ["top"],
+    editorLines: [" ──────────", " > hello", " ──────────"],
+    bottomStatusLines: ["⠏ Shaolin Switchblade Sync..."],
+  });
+
+  assert.deepEqual(rendered.lines, [
+    "top",
+    " ──────────",
+    " > hello",
+    " ──────────",
+    " ⠏ Shaolin Switchblade Sync...",
+  ]);
+});
+
+test("fixed cluster renders native working status on the last prompt row", () => {
+  const rendered = renderFixedEditorCluster({
+    width: 80,
+    terminalRows: 7,
+    topLines: ["top"],
+    editorLines: [" ──────────", " > hello", " ──────────"],
+    lastPromptLines: [" ↳ previous prompt"],
+    bottomStatusLines: ["⠏ Working..."],
+  });
+
+  assert.deepEqual(rendered.lines, [
+    "top",
+    " ──────────",
+    " > hello",
+    " ──────────",
+    " ⠏ Working...  ↳ previous prompt",
+  ]);
+});
+
+test("fixed cluster preserves editor bottom border when compacting around cursor", () => {
+  const rendered = renderFixedEditorCluster({
+    width: 40,
+    terminalRows: 4,
+    editorLines: [
+      " ──────────",
+      " > first",
+      ` > second ${CURSOR_MARKER}`,
+      " > third",
+      " ──────────",
+    ],
+  });
+
+  assert.deepEqual(rendered.lines, [" ──────────", " > second ", " ──────────"]);
+  assert.deepEqual(rendered.cursor, { row: 1, col: 10 });
 });
 
 test("terminal split can render a hidden status container in the fixed cluster", () => {

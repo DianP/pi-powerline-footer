@@ -1,12 +1,25 @@
 import { hostname as osHostname } from "node:os";
 import { basename } from "node:path";
-import { visibleWidth } from "@mariozechner/pi-tui";
-import type { BuiltinStatusLineSegmentId, RenderedSegment, SegmentContext, SemanticColor, StatusLineSegment, StatusLineSegmentId } from "./types.ts";
-import { normalizeCompactExtensionStatus, normalizeExtensionStatusValue } from "./powerline-config.ts";
-import { fg, rainbow, applyColor } from "./theme.ts";
-import { getIcons, SEP_DOT, getThinkingText } from "./icons.ts";
+import { getIcons, getThinkingText, SEP_DOT } from "./icons.ts";
+import {
+  normalizeCompactExtensionStatus,
+  normalizeExtensionStatusValue,
+} from "./powerline-config.ts";
+import { applyColor, fg, rainbow } from "./theme.ts";
+import type {
+  BuiltinStatusLineSegmentId,
+  RenderedSegment,
+  SegmentContext,
+  SemanticColor,
+  StatusLineSegment,
+  StatusLineSegmentId,
+} from "./types.ts";
 
-function color(ctx: SegmentContext, semantic: SemanticColor, text: string): string {
+function color(
+  ctx: SegmentContext,
+  semantic: SemanticColor,
+  text: string,
+): string {
   return fg(ctx.theme, semantic, text, ctx.colors);
 }
 
@@ -84,7 +97,14 @@ const shellModeSegment: StatusLineSegment = {
       parts.push(cwd);
     }
 
-    return { content: color(ctx, "shellMode", withIcon(icons.shell, parts.join(SEP_DOT))), visible: true };
+    return {
+      content: color(
+        ctx,
+        "shellMode",
+        withIcon(icons.shell, parts.join(SEP_DOT)),
+      ),
+      visible: true,
+    };
   },
 };
 
@@ -95,7 +115,8 @@ const pathSegment: StatusLineSegment = {
     const opts = ctx.options.path ?? {};
     const mode = opts.mode ?? "basename";
 
-    let pwd = ctx.shellModeActive && ctx.shellCwd ? ctx.shellCwd : process.cwd();
+    let pwd =
+      ctx.shellModeActive && ctx.shellCwd ? ctx.shellCwd : process.cwd();
     const home = process.env.HOME || process.env.USERPROFILE;
 
     if (mode === "basename") {
@@ -132,13 +153,18 @@ const gitSegment: StatusLineSegment = {
     const icons = getIcons();
     const opts = ctx.options.git ?? {};
     const { branch, staged, unstaged, untracked } = ctx.git;
-    const gitStatus = (staged > 0 || unstaged > 0 || untracked > 0) 
-      ? { staged, unstaged, untracked } 
-      : null;
+    const gitStatus =
+      staged > 0 || unstaged > 0 || untracked > 0
+        ? { staged, unstaged, untracked }
+        : null;
 
     if (!branch && !gitStatus) return { content: "", visible: false };
 
-    const isDirty = gitStatus && (gitStatus.staged > 0 || gitStatus.unstaged > 0 || gitStatus.untracked > 0);
+    const isDirty =
+      gitStatus &&
+      (gitStatus.staged > 0 ||
+        gitStatus.unstaged > 0 ||
+        gitStatus.untracked > 0);
     const showBranch = opts.showBranch !== false;
     const branchColor: SemanticColor = isDirty ? "gitDirty" : "gitClean";
 
@@ -153,19 +179,27 @@ const gitSegment: StatusLineSegment = {
     if (gitStatus) {
       const indicators: string[] = [];
       if (opts.showUnstaged !== false && gitStatus.unstaged > 0) {
-        indicators.push(applyColor(ctx.theme, "warning", `*${gitStatus.unstaged}`));
+        indicators.push(
+          applyColor(ctx.theme, "warning", `*${gitStatus.unstaged}`),
+        );
       }
       if (opts.showStaged !== false && gitStatus.staged > 0) {
-        indicators.push(applyColor(ctx.theme, "success", `+${gitStatus.staged}`));
+        indicators.push(
+          applyColor(ctx.theme, "success", `+${gitStatus.staged}`),
+        );
       }
       if (opts.showUntracked !== false && gitStatus.untracked > 0) {
-        indicators.push(applyColor(ctx.theme, "muted", `?${gitStatus.untracked}`));
+        indicators.push(
+          applyColor(ctx.theme, "muted", `?${gitStatus.untracked}`),
+        );
       }
       if (indicators.length > 0) {
         const indicatorText = indicators.join(" ");
         if (!content && showBranch === false) {
           // No branch shown, color the git icon with branch color
-          content = color(ctx, branchColor, icons.git ? `${icons.git} ` : "") + indicatorText;
+          content =
+            color(ctx, branchColor, icons.git ? `${icons.git} ` : "") +
+            indicatorText;
         } else {
           content += content ? ` ${indicatorText}` : indicatorText;
         }
@@ -280,7 +314,10 @@ const tokenRateSegment: StatusLineSegment = {
     const rate = ctx.tokenRate;
     if (!rate) return { content: "", visible: false };
 
-    const content = withIcon(icons.tokenRate, `${formatTokens(Math.round(rate))}/s`);
+    const content = withIcon(
+      icons.tokenRate,
+      `${formatTokens(Math.round(rate))}/s`,
+    );
     return { content: color(ctx, "tokens", content), visible: true };
   },
 };
@@ -297,7 +334,10 @@ const costSegment: StatusLineSegment = {
     }
 
     const costDisplay = usingSubscription ? "sub" : cost.toFixed(2);
-    return { content: color(ctx, "cost", withIcon(icons.cost, costDisplay)), visible: true };
+    return {
+      content: color(ctx, "cost", withIcon(icons.cost, costDisplay)),
+      visible: true,
+    };
   },
 };
 
@@ -310,10 +350,12 @@ const contextPctSegment: StatusLineSegment = {
     const pct = ctx.contextPercent;
     const window = ctx.contextWindow;
 
-    const autoIcon = ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
-    const pctText = window > 0
-      ? `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%/${formatTokens(window)}`
-      : "?";
+    const autoIcon =
+      ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
+    const pctText =
+      window > 0
+        ? `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%/${formatTokens(window)}`
+        : "?";
     const text = `${pctText}${autoIcon}`;
     const content = withIcon(icons.context, text);
 
@@ -338,7 +380,11 @@ const contextTotalSegment: StatusLineSegment = {
     if (!window) return { content: "", visible: false };
 
     return {
-      content: color(ctx, "context", withIcon(icons.context, formatTokens(window))),
+      content: color(
+        ctx,
+        "context",
+        withIcon(icons.context, formatTokens(window)),
+      ),
       visible: true,
     };
   },
@@ -351,7 +397,14 @@ const timeSpentSegment: StatusLineSegment = {
     const elapsed = Date.now() - ctx.sessionStartTime;
     if (elapsed < 1000) return { content: "", visible: false };
 
-    return { content: color(ctx, "muted", withIcon(icons.time, formatDuration(elapsed))), visible: true };
+    return {
+      content: color(
+        ctx,
+        "muted",
+        withIcon(icons.time, formatDuration(elapsed)),
+      ),
+      visible: true,
+    };
   },
 };
 
@@ -376,7 +429,10 @@ const timeSegment: StatusLineSegment = {
     }
     timeStr += suffix;
 
-    return { content: color(ctx, "dim", withIcon(icons.time, timeStr)), visible: true };
+    return {
+      content: color(ctx, "dim", withIcon(icons.time, timeStr)),
+      visible: true,
+    };
   },
 };
 
@@ -387,7 +443,10 @@ const sessionSegment: StatusLineSegment = {
     const sessionId = ctx.sessionId;
     const display = sessionId?.slice(0, 8) || "new";
 
-    return { content: color(ctx, "muted", withIcon(icons.session, display)), visible: true };
+    return {
+      content: color(ctx, "muted", withIcon(icons.session, display)),
+      visible: true,
+    };
   },
 };
 
@@ -396,7 +455,10 @@ const hostnameSegment: StatusLineSegment = {
   render(ctx) {
     const icons = getIcons();
     const name = osHostname().split(".")[0];
-    return { content: color(ctx, "dim", withIcon(icons.host, name)), visible: true };
+    return {
+      content: color(ctx, "dim", withIcon(icons.host, name)),
+      visible: true,
+    };
   },
 };
 
@@ -407,7 +469,9 @@ const cacheReadSegment: StatusLineSegment = {
     const { cacheRead } = ctx.usageStats;
     if (!cacheRead) return { content: "", visible: false };
 
-    const parts = [icons.cache, icons.input, formatTokens(cacheRead)].filter(Boolean);
+    const parts = [icons.cache, icons.input, formatTokens(cacheRead)].filter(
+      Boolean,
+    );
     const content = parts.join(" ");
     return { content: color(ctx, "tokens", content), visible: true };
   },
@@ -420,9 +484,23 @@ const cacheWriteSegment: StatusLineSegment = {
     const { cacheWrite } = ctx.usageStats;
     if (!cacheWrite) return { content: "", visible: false };
 
-    const parts = [icons.cache, icons.output, formatTokens(cacheWrite)].filter(Boolean);
+    const parts = [icons.cache, icons.output, formatTokens(cacheWrite)].filter(
+      Boolean,
+    );
     const content = parts.join(" ");
     return { content: color(ctx, "tokens", content), visible: true };
+  },
+};
+const cacheRateSegment: StatusLineSegment = {
+  id: "cache_rate",
+  render(ctx) {
+    const icons = getIcons();
+    const { cacheRead, cacheWrite } = ctx.usageStats;
+    const total = cacheRead + cacheWrite;
+    if (!total) return { content: "", visible: false };
+    const rate = Math.round((cacheRead / total) * 100);
+    const contentWithIcon = withIcon(icons.cache, String(rate) + "%");
+    return { content: color(ctx, "tokens", contentWithIcon), visible: true };
   },
 };
 
@@ -430,7 +508,8 @@ const extensionStatusesSegment: StatusLineSegment = {
   id: "extension_statuses",
   render(ctx) {
     const statuses = ctx.extensionStatuses;
-    if (!statuses || statuses.size === 0) return { content: "", visible: false };
+    if (!statuses || statuses.size === 0)
+      return { content: "", visible: false };
 
     // Join compact statuses with a separator
     // Skip: empty strings, notification-style ("[...") shown above editor,
@@ -478,18 +557,26 @@ export const SEGMENTS: Record<BuiltinStatusLineSegmentId, StatusLineSegment> = {
   hostname: hostnameSegment,
   cache_read: cacheReadSegment,
   cache_write: cacheWriteSegment,
+  cache_rate: cacheRateSegment,
   extension_statuses: extensionStatusesSegment,
 };
 
-function renderCustomSegment(id: `custom:${string}`, ctx: SegmentContext): RenderedSegment {
+function renderCustomSegment(
+  id: `custom:${string}`,
+  ctx: SegmentContext,
+): RenderedSegment {
   const customItemId = id.slice("custom:".length);
   const custom = ctx.customItemsById.get(customItemId);
   if (!custom) return { content: "", visible: false };
 
   const rawStatus = ctx.extensionStatuses.get(custom.statusKey);
-  const normalizedStatus = rawStatus ? normalizeExtensionStatusValue(rawStatus) : null;
+  const normalizedStatus = rawStatus
+    ? normalizeExtensionStatusValue(rawStatus)
+    : null;
   if (!normalizedStatus) {
-    return custom.hideWhenMissing ? { content: "", visible: false } : { content: custom.prefix ?? custom.id, visible: true };
+    return custom.hideWhenMissing
+      ? { content: "", visible: false }
+      : { content: custom.prefix ?? custom.id, visible: true };
   }
 
   let content = normalizedStatus;
@@ -503,7 +590,10 @@ function renderCustomSegment(id: `custom:${string}`, ctx: SegmentContext): Rende
   return { content, visible: true };
 }
 
-export function renderSegment(id: StatusLineSegmentId, ctx: SegmentContext): RenderedSegment {
+export function renderSegment(
+  id: StatusLineSegmentId,
+  ctx: SegmentContext,
+): RenderedSegment {
   if (id.startsWith("custom:")) {
     return renderCustomSegment(id, ctx);
   }

@@ -1,5 +1,5 @@
-import type { ColorScheme, PresetDef, StatusLinePreset } from "./types.js";
 import { getDefaultColors } from "./theme.js";
+import type { ColorScheme, PresetDef, StatusLinePreset } from "./types.js";
 
 // Get base colors from theme.ts (single source of truth)
 const DEFAULT_COLORS: ColorScheme = getDefaultColors();
@@ -37,7 +37,12 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     segmentOptions: {
       model: { showThinkingLevel: false },
       path: { mode: "basename" },
-      git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+      git: {
+        showBranch: true,
+        showStaged: true,
+        showUnstaged: true,
+        showUntracked: true,
+      },
     },
   },
 
@@ -48,7 +53,12 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     colors: MINIMAL_COLORS,
     segmentOptions: {
       path: { mode: "basename" },
-      git: { showBranch: true, showStaged: false, showUnstaged: false, showUntracked: false },
+      git: {
+        showBranch: true,
+        showStaged: false,
+        showUnstaged: false,
+        showUntracked: false,
+      },
     },
   },
 
@@ -59,32 +69,82 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
-      git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: false },
+      git: {
+        showBranch: true,
+        showStaged: true,
+        showUnstaged: true,
+        showUntracked: false,
+      },
     },
   },
 
   full: {
-    leftSegments: ["path", "git", "model", "thinking", "shell_mode", "subagents"],
-    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "token_rate", "context_pct", "cost", "time"],
+    leftSegments: [
+      "path",
+      "git",
+      "model",
+      "thinking",
+      "shell_mode",
+      "subagents",
+    ],
+    rightSegments: [
+      "token_in",
+      "token_out",
+      "cache_read",
+      "cache_write",
+      "cache_rate",
+      "token_rate",
+      "context_pct",
+      "cost",
+      "time",
+    ],
     separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
       path: { mode: "abbreviated", maxLength: 50 },
-      git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+      git: {
+        showBranch: true,
+        showStaged: true,
+        showUnstaged: true,
+        showUntracked: true,
+      },
       time: { format: "24h", showSeconds: false },
     },
   },
 
   nerd: {
-    leftSegments: ["path", "git", "session", "model", "thinking", "shell_mode", "subagents"],
-    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "token_rate", "context_pct", "cost", "time"],
+    leftSegments: [
+      "path",
+      "git",
+      "session",
+      "model",
+      "thinking",
+      "shell_mode",
+      "subagents",
+    ],
+    rightSegments: [
+      "token_in",
+      "token_out",
+      "cache_read",
+      "cache_write",
+      "cache_rate",
+      "token_rate",
+      "context_pct",
+      "cost",
+      "time",
+    ],
     separator: "dot",
     colors: NERD_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
       path: { mode: "abbreviated", maxLength: 60 },
-      git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+      git: {
+        showBranch: true,
+        showStaged: true,
+        showUnstaged: true,
+        showUntracked: true,
+      },
       time: { format: "24h", showSeconds: true },
     },
   },
@@ -97,13 +157,27 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     segmentOptions: {
       model: { showThinkingLevel: true },
       path: { mode: "abbreviated", maxLength: 40 },
-      git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+      git: {
+        showBranch: true,
+        showStaged: true,
+        showUnstaged: true,
+        showUntracked: true,
+      },
     },
   },
 
   custom: {
     leftSegments: ["path", "git", "model", "thinking", "shell_mode"],
-    rightSegments: ["token_in", "token_out", "cache_read", "cache_write", "context_pct", "cost", "time"],
+    rightSegments: [
+      "token_in",
+      "token_out",
+      "cache_read",
+      "cache_write",
+      "cache_rate",
+      "context_pct",
+      "cost",
+      "time",
+    ],
     separator: "dot",
     colors: DEFAULT_COLORS,
     segmentOptions: {},

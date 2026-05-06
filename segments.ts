@@ -2,25 +2,25 @@ import { hostname as osHostname } from "node:os";
 import { basename } from "node:path";
 import { getIcons, getThinkingText, SEP_DOT } from "./icons.ts";
 import {
-  normalizeCompactExtensionStatus,
-  normalizeExtensionStatusValue,
+	normalizeCompactExtensionStatus,
+	normalizeExtensionStatusValue,
 } from "./powerline-config.ts";
 import { applyColor, fg, rainbow } from "./theme.ts";
 import type {
-  BuiltinStatusLineSegmentId,
-  RenderedSegment,
-  SegmentContext,
-  SemanticColor,
-  StatusLineSegment,
-  StatusLineSegmentId,
+	BuiltinStatusLineSegmentId,
+	RenderedSegment,
+	SegmentContext,
+	SemanticColor,
+	StatusLineSegment,
+	StatusLineSegmentId,
 } from "./types.ts";
 
 function color(
-  ctx: SegmentContext,
-  semantic: SemanticColor,
-  text: string,
+	ctx: SegmentContext,
+	semantic: SemanticColor,
+	text: string,
 ): string {
-  return fg(ctx.theme, semantic, text, ctx.colors);
+	return fg(ctx.theme, semantic, text, ctx.colors);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28,25 +28,25 @@ function color(
 // ═══════════════════════════════════════════════════════════════════════════
 
 function withIcon(icon: string, text: string): string {
-  return icon ? `${icon} ${text}` : text;
+	return icon ? `${icon} ${text}` : text;
 }
 
 function formatTokens(n: number): string {
-  if (n < 1000) return n.toString();
-  if (n < 10000) return `${(n / 1000).toFixed(1)}k`;
-  if (n < 1000000) return `${Math.round(n / 1000)}k`;
-  if (n < 10000000) return `${(n / 1000000).toFixed(1)}M`;
-  return `${Math.round(n / 1000000)}M`;
+	if (n < 1000) return n.toString();
+	if (n < 10000) return `${(n / 1000).toFixed(1)}k`;
+	if (n < 1000000) return `${Math.round(n / 1000)}k`;
+	if (n < 10000000) return `${(n / 1000000).toFixed(1)}M`;
+	return `${Math.round(n / 1000000)}M`;
 }
 
 function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
+	const seconds = Math.floor(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
 
-  if (hours > 0) return `${hours}h${minutes % 60}m`;
-  if (minutes > 0) return `${minutes}m${seconds % 60}s`;
-  return `${seconds}s`;
+	if (hours > 0) return `${hours}h${minutes % 60}m`;
+	if (minutes > 0) return `${minutes}m${seconds % 60}s`;
+	return `${seconds}s`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -54,482 +54,482 @@ function formatDuration(ms: number): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const modelSegment: StatusLineSegment = {
-  id: "model",
-  render(ctx) {
-    const icons = getIcons();
-    const opts = ctx.options.model ?? {};
+	id: "model",
+	render(ctx) {
+		const icons = getIcons();
+		const opts = ctx.options.model ?? {};
 
-    let modelName = ctx.model?.name || ctx.model?.id || "no-model";
-    // Strip "Claude " prefix for brevity
-    if (modelName.startsWith("Claude ")) {
-      modelName = modelName.slice(7);
-    }
+		let modelName = ctx.model?.name || ctx.model?.id || "no-model";
+		// Strip "Claude " prefix for brevity
+		if (modelName.startsWith("Claude ")) {
+			modelName = modelName.slice(7);
+		}
 
-    let content = withIcon(icons.model, modelName);
+		let content = withIcon(icons.model, modelName);
 
-    if (opts.showThinkingLevel !== false && ctx.model?.reasoning) {
-      const level = ctx.thinkingLevel || "off";
-      if (level !== "off") {
-        const thinkingText = getThinkingText(level);
-        if (thinkingText) {
-          content += `${SEP_DOT}${thinkingText}`;
-        }
-      }
-    }
+		if (opts.showThinkingLevel !== false && ctx.model?.reasoning) {
+			const level = ctx.thinkingLevel || "off";
+			if (level !== "off") {
+				const thinkingText = getThinkingText(level);
+				if (thinkingText) {
+					content += `${SEP_DOT}${thinkingText}`;
+				}
+			}
+		}
 
-    return { content: color(ctx, "model", content), visible: true };
-  },
+		return { content: color(ctx, "model", content), visible: true };
+	},
 };
 
 const shellModeSegment: StatusLineSegment = {
-  id: "shell_mode",
-  render(ctx) {
-    if (!ctx.shellModeActive) {
-      return { content: "", visible: false };
-    }
+	id: "shell_mode",
+	render(ctx) {
+		if (!ctx.shellModeActive) {
+			return { content: "", visible: false };
+		}
 
-    const icons = getIcons();
-    const shellName = ctx.shellName ?? "shell";
-    const state = ctx.shellRunning ? "run" : "idle";
-    const cwd = ctx.shellCwd ? basename(ctx.shellCwd) : null;
-    const parts = [shellName, state];
-    if (cwd) {
-      parts.push(cwd);
-    }
+		const icons = getIcons();
+		const shellName = ctx.shellName ?? "shell";
+		const state = ctx.shellRunning ? "run" : "idle";
+		const cwd = ctx.shellCwd ? basename(ctx.shellCwd) : null;
+		const parts = [shellName, state];
+		if (cwd) {
+			parts.push(cwd);
+		}
 
-    return {
-      content: color(
-        ctx,
-        "shellMode",
-        withIcon(icons.shell, parts.join(SEP_DOT)),
-      ),
-      visible: true,
-    };
-  },
+		return {
+			content: color(
+				ctx,
+				"shellMode",
+				withIcon(icons.shell, parts.join(SEP_DOT)),
+			),
+			visible: true,
+		};
+	},
 };
 
 const pathSegment: StatusLineSegment = {
-  id: "path",
-  render(ctx) {
-    const icons = getIcons();
-    const opts = ctx.options.path ?? {};
-    const mode = opts.mode ?? "basename";
+	id: "path",
+	render(ctx) {
+		const icons = getIcons();
+		const opts = ctx.options.path ?? {};
+		const mode = opts.mode ?? "basename";
 
-    let pwd =
-      ctx.shellModeActive && ctx.shellCwd ? ctx.shellCwd : process.cwd();
-    const home = process.env.HOME || process.env.USERPROFILE;
+		let pwd =
+			ctx.shellModeActive && ctx.shellCwd ? ctx.shellCwd : process.cwd();
+		const home = process.env.HOME || process.env.USERPROFILE;
 
-    if (mode === "basename") {
-      // Just the last directory component (cross-platform)
-      pwd = basename(pwd) || pwd;
-    } else {
-      // Abbreviate home directory for abbreviated/full modes
-      if (home && pwd.startsWith(home)) {
-        pwd = `~${pwd.slice(home.length)}`;
-      }
+		if (mode === "basename") {
+			// Just the last directory component (cross-platform)
+			pwd = basename(pwd) || pwd;
+		} else {
+			// Abbreviate home directory for abbreviated/full modes
+			if (home && pwd.startsWith(home)) {
+				pwd = `~${pwd.slice(home.length)}`;
+			}
 
-      // Strip /work/ prefix (common in containers)
-      if (pwd.startsWith("/work/")) {
-        pwd = pwd.slice(6);
-      }
+			// Strip /work/ prefix (common in containers)
+			if (pwd.startsWith("/work/")) {
+				pwd = pwd.slice(6);
+			}
 
-      // Truncate if too long (only for abbreviated mode)
-      if (mode === "abbreviated") {
-        const maxLen = opts.maxLength ?? 40;
-        if (pwd.length > maxLen) {
-          pwd = `…${pwd.slice(-(maxLen - 1))}`;
-        }
-      }
-    }
+			// Truncate if too long (only for abbreviated mode)
+			if (mode === "abbreviated") {
+				const maxLen = opts.maxLength ?? 40;
+				if (pwd.length > maxLen) {
+					pwd = `…${pwd.slice(-(maxLen - 1))}`;
+				}
+			}
+		}
 
-    const content = withIcon(icons.folder, pwd);
-    return { content: color(ctx, "path", content), visible: true };
-  },
+		const content = withIcon(icons.folder, pwd);
+		return { content: color(ctx, "path", content), visible: true };
+	},
 };
 
 const gitSegment: StatusLineSegment = {
-  id: "git",
-  render(ctx) {
-    const icons = getIcons();
-    const opts = ctx.options.git ?? {};
-    const { branch, staged, unstaged, untracked } = ctx.git;
-    const gitStatus =
-      staged > 0 || unstaged > 0 || untracked > 0
-        ? { staged, unstaged, untracked }
-        : null;
+	id: "git",
+	render(ctx) {
+		const icons = getIcons();
+		const opts = ctx.options.git ?? {};
+		const { branch, staged, unstaged, untracked } = ctx.git;
+		const gitStatus =
+			staged > 0 || unstaged > 0 || untracked > 0
+				? { staged, unstaged, untracked }
+				: null;
 
-    if (!branch && !gitStatus) return { content: "", visible: false };
+		if (!branch && !gitStatus) return { content: "", visible: false };
 
-    const isDirty =
-      gitStatus &&
-      (gitStatus.staged > 0 ||
-        gitStatus.unstaged > 0 ||
-        gitStatus.untracked > 0);
-    const showBranch = opts.showBranch !== false;
-    const branchColor: SemanticColor = isDirty ? "gitDirty" : "gitClean";
+		const isDirty =
+			gitStatus &&
+			(gitStatus.staged > 0 ||
+				gitStatus.unstaged > 0 ||
+				gitStatus.untracked > 0);
+		const showBranch = opts.showBranch !== false;
+		const branchColor: SemanticColor = isDirty ? "gitDirty" : "gitClean";
 
-    // Build content - color branch separately from indicators
-    let content = "";
-    if (showBranch && branch) {
-      // Color just the branch name (icon + branch text)
-      content = color(ctx, branchColor, withIcon(icons.branch, branch));
-    }
+		// Build content - color branch separately from indicators
+		let content = "";
+		if (showBranch && branch) {
+			// Color just the branch name (icon + branch text)
+			content = color(ctx, branchColor, withIcon(icons.branch, branch));
+		}
 
-    // Add status indicators (each with their own color, not wrapped)
-    if (gitStatus) {
-      const indicators: string[] = [];
-      if (opts.showUnstaged !== false && gitStatus.unstaged > 0) {
-        indicators.push(
-          applyColor(ctx.theme, "warning", `*${gitStatus.unstaged}`),
-        );
-      }
-      if (opts.showStaged !== false && gitStatus.staged > 0) {
-        indicators.push(
-          applyColor(ctx.theme, "success", `+${gitStatus.staged}`),
-        );
-      }
-      if (opts.showUntracked !== false && gitStatus.untracked > 0) {
-        indicators.push(
-          applyColor(ctx.theme, "muted", `?${gitStatus.untracked}`),
-        );
-      }
-      if (indicators.length > 0) {
-        const indicatorText = indicators.join(" ");
-        if (!content && showBranch === false) {
-          // No branch shown, color the git icon with branch color
-          content =
-            color(ctx, branchColor, icons.git ? `${icons.git} ` : "") +
-            indicatorText;
-        } else {
-          content += content ? ` ${indicatorText}` : indicatorText;
-        }
-      }
-    }
+		// Add status indicators (each with their own color, not wrapped)
+		if (gitStatus) {
+			const indicators: string[] = [];
+			if (opts.showUnstaged !== false && gitStatus.unstaged > 0) {
+				indicators.push(
+					applyColor(ctx.theme, "warning", `*${gitStatus.unstaged}`),
+				);
+			}
+			if (opts.showStaged !== false && gitStatus.staged > 0) {
+				indicators.push(
+					applyColor(ctx.theme, "success", `+${gitStatus.staged}`),
+				);
+			}
+			if (opts.showUntracked !== false && gitStatus.untracked > 0) {
+				indicators.push(
+					applyColor(ctx.theme, "muted", `?${gitStatus.untracked}`),
+				);
+			}
+			if (indicators.length > 0) {
+				const indicatorText = indicators.join(" ");
+				if (!content && showBranch === false) {
+					// No branch shown, color the git icon with branch color
+					content =
+						color(ctx, branchColor, icons.git ? `${icons.git} ` : "") +
+						indicatorText;
+				} else {
+					content += content ? ` ${indicatorText}` : indicatorText;
+				}
+			}
+		}
 
-    if (!content) return { content: "", visible: false };
+		if (!content) return { content: "", visible: false };
 
-    return { content, visible: true };
-  },
+		return { content, visible: true };
+	},
 };
 
 const thinkingSegment: StatusLineSegment = {
-  id: "thinking",
-  render(ctx) {
-    const icons = getIcons();
-    const level = ctx.thinkingLevel || "off";
+	id: "thinking",
+	render(ctx) {
+		const icons = getIcons();
+		const level = ctx.thinkingLevel || "off";
 
-    const levelText: Record<string, string> = {
-      off: "off",
-      minimal: "min",
-      low: "low",
-      medium: "med",
-      high: "high",
-      xhigh: "xhigh",
-    };
-    const label = levelText[level] || level;
-    const content = withIcon(icons.thinking, label);
+		const levelText: Record<string, string> = {
+			off: "off",
+			minimal: "min",
+			low: "low",
+			medium: "med",
+			high: "high",
+			xhigh: "xhigh",
+		};
+		const label = levelText[level] || level;
+		const content = withIcon(icons.thinking, label);
 
-    if (level === "high" || level === "xhigh") {
-      return { content: rainbow(content), visible: true };
-    }
+		if (level === "high" || level === "xhigh") {
+			return { content: rainbow(content), visible: true };
+		}
 
-    if (level === "minimal") {
-      return { content: color(ctx, "thinkingMinimal", content), visible: true };
-    }
-    if (level === "low") {
-      return { content: color(ctx, "thinkingLow", content), visible: true };
-    }
-    if (level === "medium") {
-      return { content: color(ctx, "thinkingMedium", content), visible: true };
-    }
+		if (level === "minimal") {
+			return { content: color(ctx, "thinkingMinimal", content), visible: true };
+		}
+		if (level === "low") {
+			return { content: color(ctx, "thinkingLow", content), visible: true };
+		}
+		if (level === "medium") {
+			return { content: color(ctx, "thinkingMedium", content), visible: true };
+		}
 
-    return { content: color(ctx, "thinking", content), visible: true };
-  },
+		return { content: color(ctx, "thinking", content), visible: true };
+	},
 };
 
 const subagentsSegment: StatusLineSegment = {
-  id: "subagents",
-  render() {
-    // Note: pi-mono doesn't have subagent tracking built-in
-    // This would require extension state management
-    // For now, return not visible
-    return { content: "", visible: false };
-  },
+	id: "subagents",
+	render() {
+		// Note: pi-mono doesn't have subagent tracking built-in
+		// This would require extension state management
+		// For now, return not visible
+		return { content: "", visible: false };
+	},
 };
 
 const tokenInSegment: StatusLineSegment = {
-  id: "token_in",
-  render(ctx) {
-    const icons = getIcons();
-    const { input } = ctx.usageStats;
-    if (!input) return { content: "", visible: false };
+	id: "token_in",
+	render(ctx) {
+		const icons = getIcons();
+		const { input } = ctx.usageStats;
+		if (!input) return { content: "", visible: false };
 
-    const content = withIcon(icons.input, formatTokens(input));
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const content = withIcon(icons.input, formatTokens(input));
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const tokenOutSegment: StatusLineSegment = {
-  id: "token_out",
-  render(ctx) {
-    const icons = getIcons();
-    const { output } = ctx.usageStats;
-    if (!output) return { content: "", visible: false };
+	id: "token_out",
+	render(ctx) {
+		const icons = getIcons();
+		const { output } = ctx.usageStats;
+		if (!output) return { content: "", visible: false };
 
-    const content = withIcon(icons.output, formatTokens(output));
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const content = withIcon(icons.output, formatTokens(output));
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const tokenTotalSegment: StatusLineSegment = {
-  id: "token_total",
-  render(ctx) {
-    const icons = getIcons();
-    const { input, output, cacheRead, cacheWrite } = ctx.usageStats;
-    const total = input + output + cacheRead + cacheWrite;
-    if (!total) return { content: "", visible: false };
+	id: "token_total",
+	render(ctx) {
+		const icons = getIcons();
+		const { input, output, cacheRead, cacheWrite } = ctx.usageStats;
+		const total = input + output + cacheRead + cacheWrite;
+		if (!total) return { content: "", visible: false };
 
-    const content = withIcon(icons.cache, formatTokens(total));
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const content = withIcon(icons.cache, formatTokens(total));
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const tokenIoSegment: StatusLineSegment = {
-  id: "token_io",
-  render(ctx) {
-    const icons = getIcons();
-    const { input, output } = ctx.usageStats;
-    const total = input + output;
-    if (!total) return { content: "", visible: false };
+	id: "token_io",
+	render(ctx) {
+		const icons = getIcons();
+		const { input, output } = ctx.usageStats;
+		const total = input + output;
+		if (!total) return { content: "", visible: false };
 
-    const content = withIcon(icons.tokenIo, formatTokens(total));
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const content = withIcon(icons.tokenIo, formatTokens(total));
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const tokenRateSegment: StatusLineSegment = {
-  id: "token_rate",
-  render(ctx) {
-    const icons = getIcons();
-    const rate = ctx.tokenRate;
-    if (!rate) return { content: "", visible: false };
+	id: "token_rate",
+	render(ctx) {
+		const icons = getIcons();
+		const rate = ctx.tokenRate;
+		if (!rate) return { content: "", visible: false };
 
-    const content = withIcon(
-      icons.tokenRate,
-      `${formatTokens(Math.round(rate))}/s`,
-    );
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const content = withIcon(
+			icons.tokenRate,
+			`${formatTokens(Math.round(rate))}/s`,
+		);
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const costSegment: StatusLineSegment = {
-  id: "cost",
-  render(ctx) {
-    const icons = getIcons();
-    const { cost } = ctx.usageStats;
-    const usingSubscription = ctx.usingSubscription;
+	id: "cost",
+	render(ctx) {
+		const icons = getIcons();
+		const { cost } = ctx.usageStats;
+		const usingSubscription = ctx.usingSubscription;
 
-    if (!cost && !usingSubscription) {
-      return { content: "", visible: false };
-    }
+		if (!cost && !usingSubscription) {
+			return { content: "", visible: false };
+		}
 
-    const costDisplay = usingSubscription ? "sub" : cost.toFixed(2);
-    return {
-      content: color(ctx, "cost", withIcon(icons.cost, costDisplay)),
-      visible: true,
-    };
-  },
+		const costDisplay = usingSubscription ? "sub" : cost.toFixed(2);
+		return {
+			content: color(ctx, "cost", withIcon(icons.cost, costDisplay)),
+			visible: true,
+		};
+	},
 };
 
 const contextPctSegment: StatusLineSegment = {
-  id: "context_pct",
-  render(ctx) {
-    if (ctx.customCompactionEnabled) return { content: "", visible: false };
+	id: "context_pct",
+	render(ctx) {
+		if (ctx.customCompactionEnabled) return { content: "", visible: false };
 
-    const icons = getIcons();
-    const pct = ctx.contextPercent;
-    const window = ctx.contextWindow;
+		const icons = getIcons();
+		const pct = ctx.contextPercent;
+		const window = ctx.contextWindow;
 
-    const autoIcon =
-      ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
-    const pctText =
-      window > 0
-        ? `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%/${formatTokens(window)}`
-        : "?";
-    const text = `${pctText}${autoIcon}`;
-    const content = withIcon(icons.context, text);
+		const autoIcon =
+			ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
+		const pctText =
+			window > 0
+				? `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%/${formatTokens(window)}`
+				: "?";
+		const text = `${pctText}${autoIcon}`;
+		const content = withIcon(icons.context, text);
 
-    if (pct > 90) {
-      return { content: color(ctx, "contextError", content), visible: true };
-    }
-    if (pct > 70) {
-      return { content: color(ctx, "contextWarn", content), visible: true };
-    }
+		if (pct > 90) {
+			return { content: color(ctx, "contextError", content), visible: true };
+		}
+		if (pct > 70) {
+			return { content: color(ctx, "contextWarn", content), visible: true };
+		}
 
-    return { content: color(ctx, "context", content), visible: true };
-  },
+		return { content: color(ctx, "context", content), visible: true };
+	},
 };
 
 const contextTotalSegment: StatusLineSegment = {
-  id: "context_total",
-  render(ctx) {
-    if (ctx.customCompactionEnabled) return { content: "", visible: false };
+	id: "context_total",
+	render(ctx) {
+		if (ctx.customCompactionEnabled) return { content: "", visible: false };
 
-    const icons = getIcons();
-    const window = ctx.contextWindow;
-    if (!window) return { content: "", visible: false };
+		const icons = getIcons();
+		const window = ctx.contextWindow;
+		if (!window) return { content: "", visible: false };
 
-    return {
-      content: color(
-        ctx,
-        "context",
-        withIcon(icons.context, formatTokens(window)),
-      ),
-      visible: true,
-    };
-  },
+		return {
+			content: color(
+				ctx,
+				"context",
+				withIcon(icons.context, formatTokens(window)),
+			),
+			visible: true,
+		};
+	},
 };
 
 const timeSpentSegment: StatusLineSegment = {
-  id: "time_spent",
-  render(ctx) {
-    const icons = getIcons();
-    const elapsed = Date.now() - ctx.sessionStartTime;
-    if (elapsed < 1000) return { content: "", visible: false };
+	id: "time_spent",
+	render(ctx) {
+		const icons = getIcons();
+		const elapsed = Date.now() - ctx.sessionStartTime;
+		if (elapsed < 1000) return { content: "", visible: false };
 
-    return {
-      content: color(
-        ctx,
-        "muted",
-        withIcon(icons.time, formatDuration(elapsed)),
-      ),
-      visible: true,
-    };
-  },
+		return {
+			content: color(
+				ctx,
+				"muted",
+				withIcon(icons.time, formatDuration(elapsed)),
+			),
+			visible: true,
+		};
+	},
 };
 
 const timeSegment: StatusLineSegment = {
-  id: "time",
-  render(ctx) {
-    const icons = getIcons();
-    const opts = ctx.options.time ?? {};
-    const now = new Date();
+	id: "time",
+	render(ctx) {
+		const icons = getIcons();
+		const opts = ctx.options.time ?? {};
+		const now = new Date();
 
-    let hours = now.getHours();
-    let suffix = "";
-    if (opts.format === "12h") {
-      suffix = hours >= 12 ? "pm" : "am";
-      hours = hours % 12 || 12;
-    }
+		let hours = now.getHours();
+		let suffix = "";
+		if (opts.format === "12h") {
+			suffix = hours >= 12 ? "pm" : "am";
+			hours = hours % 12 || 12;
+		}
 
-    const mins = now.getMinutes().toString().padStart(2, "0");
-    let timeStr = `${hours}:${mins}`;
-    if (opts.showSeconds) {
-      timeStr += `:${now.getSeconds().toString().padStart(2, "0")}`;
-    }
-    timeStr += suffix;
+		const mins = now.getMinutes().toString().padStart(2, "0");
+		let timeStr = `${hours}:${mins}`;
+		if (opts.showSeconds) {
+			timeStr += `:${now.getSeconds().toString().padStart(2, "0")}`;
+		}
+		timeStr += suffix;
 
-    return {
-      content: color(ctx, "dim", withIcon(icons.time, timeStr)),
-      visible: true,
-    };
-  },
+		return {
+			content: color(ctx, "dim", withIcon(icons.time, timeStr)),
+			visible: true,
+		};
+	},
 };
 
 const sessionSegment: StatusLineSegment = {
-  id: "session",
-  render(ctx) {
-    const icons = getIcons();
-    const sessionId = ctx.sessionId;
-    const display = sessionId?.slice(0, 8) || "new";
+	id: "session",
+	render(ctx) {
+		const icons = getIcons();
+		const sessionId = ctx.sessionId;
+		const display = sessionId?.slice(0, 8) || "new";
 
-    return {
-      content: color(ctx, "muted", withIcon(icons.session, display)),
-      visible: true,
-    };
-  },
+		return {
+			content: color(ctx, "muted", withIcon(icons.session, display)),
+			visible: true,
+		};
+	},
 };
 
 const hostnameSegment: StatusLineSegment = {
-  id: "hostname",
-  render(ctx) {
-    const icons = getIcons();
-    const name = osHostname().split(".")[0];
-    return {
-      content: color(ctx, "dim", withIcon(icons.host, name)),
-      visible: true,
-    };
-  },
+	id: "hostname",
+	render(ctx) {
+		const icons = getIcons();
+		const name = osHostname().split(".")[0];
+		return {
+			content: color(ctx, "dim", withIcon(icons.host, name)),
+			visible: true,
+		};
+	},
 };
 
 const cacheReadSegment: StatusLineSegment = {
-  id: "cache_read",
-  render(ctx) {
-    const icons = getIcons();
-    const { cacheRead } = ctx.usageStats;
-    if (!cacheRead) return { content: "", visible: false };
+	id: "cache_read",
+	render(ctx) {
+		const icons = getIcons();
+		const { cacheRead } = ctx.usageStats;
+		if (!cacheRead) return { content: "", visible: false };
 
-    const parts = [icons.cache, icons.input, formatTokens(cacheRead)].filter(
-      Boolean,
-    );
-    const content = parts.join(" ");
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const parts = [icons.cache, icons.input, formatTokens(cacheRead)].filter(
+			Boolean,
+		);
+		const content = parts.join(" ");
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 
 const cacheWriteSegment: StatusLineSegment = {
-  id: "cache_write",
-  render(ctx) {
-    const icons = getIcons();
-    const { cacheWrite } = ctx.usageStats;
-    if (!cacheWrite) return { content: "", visible: false };
+	id: "cache_write",
+	render(ctx) {
+		const icons = getIcons();
+		const { cacheWrite } = ctx.usageStats;
+		if (!cacheWrite) return { content: "", visible: false };
 
-    const parts = [icons.cache, icons.output, formatTokens(cacheWrite)].filter(
-      Boolean,
-    );
-    const content = parts.join(" ");
-    return { content: color(ctx, "tokens", content), visible: true };
-  },
+		const parts = [icons.cache, icons.output, formatTokens(cacheWrite)].filter(
+			Boolean,
+		);
+		const content = parts.join(" ");
+		return { content: color(ctx, "tokens", content), visible: true };
+	},
 };
 const cacheRateSegment: StatusLineSegment = {
-  id: "cache_rate",
-  render(ctx) {
-    const icons = getIcons();
-    const { cacheRead, cacheWrite } = ctx.usageStats;
-    const total = cacheRead + cacheWrite;
-    if (!total) return { content: "", visible: false };
-    const rate = Math.round((cacheRead / total) * 100);
-    const contentWithIcon = withIcon(icons.cache, String(rate) + "%");
-    return { content: color(ctx, "tokens", contentWithIcon), visible: true };
-  },
+	id: "cache_rate",
+	render(ctx) {
+		const icons = getIcons();
+		const { input, cacheRead } = ctx.usageStats;
+		const promptTokens = input + cacheRead;
+		if (!promptTokens) return { content: "", visible: false };
+		const rate = Math.round((cacheRead / promptTokens) * 100);
+		const contentWithIcon = withIcon(icons.cache, String(rate) + "%");
+		return { content: color(ctx, "tokens", contentWithIcon), visible: true };
+	},
 };
 
 const extensionStatusesSegment: StatusLineSegment = {
-  id: "extension_statuses",
-  render(ctx) {
-    const statuses = ctx.extensionStatuses;
-    if (!statuses || statuses.size === 0)
-      return { content: "", visible: false };
+	id: "extension_statuses",
+	render(ctx) {
+		const statuses = ctx.extensionStatuses;
+		if (!statuses || statuses.size === 0)
+			return { content: "", visible: false };
 
-    // Join compact statuses with a separator
-    // Skip: empty strings, notification-style ("[...") shown above editor,
-    // and strings that are only ANSI codes with no visible text.
-    // Also skip statuses explicitly elevated into dedicated custom segments.
-    const parts: string[] = [];
-    for (const [statusKey, value] of statuses.entries()) {
-      if (ctx.hiddenExtensionStatusKeys.has(statusKey)) continue;
-      const normalized = value ? normalizeCompactExtensionStatus(value) : null;
-      if (normalized) {
-        parts.push(normalized);
-      }
-    }
+		// Join compact statuses with a separator
+		// Skip: empty strings, notification-style ("[...") shown above editor,
+		// and strings that are only ANSI codes with no visible text.
+		// Also skip statuses explicitly elevated into dedicated custom segments.
+		const parts: string[] = [];
+		for (const [statusKey, value] of statuses.entries()) {
+			if (ctx.hiddenExtensionStatusKeys.has(statusKey)) continue;
+			const normalized = value ? normalizeCompactExtensionStatus(value) : null;
+			if (normalized) {
+				parts.push(normalized);
+			}
+		}
 
-    if (parts.length === 0) return { content: "", visible: false };
+		if (parts.length === 0) return { content: "", visible: false };
 
-    // Statuses already have their own styling applied by the extensions
-    const content = parts.join(` ${SEP_DOT} `);
-    return { content, visible: true };
-  },
+		// Statuses already have their own styling applied by the extensions
+		const content = parts.join(` ${SEP_DOT} `);
+		return { content, visible: true };
+	},
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -537,70 +537,70 @@ const extensionStatusesSegment: StatusLineSegment = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const SEGMENTS: Record<BuiltinStatusLineSegmentId, StatusLineSegment> = {
-  model: modelSegment,
-  thinking: thinkingSegment,
-  shell_mode: shellModeSegment,
-  path: pathSegment,
-  git: gitSegment,
-  subagents: subagentsSegment,
-  token_in: tokenInSegment,
-  token_out: tokenOutSegment,
-  token_total: tokenTotalSegment,
-  token_io: tokenIoSegment,
-  token_rate: tokenRateSegment,
-  cost: costSegment,
-  context_pct: contextPctSegment,
-  context_total: contextTotalSegment,
-  time_spent: timeSpentSegment,
-  time: timeSegment,
-  session: sessionSegment,
-  hostname: hostnameSegment,
-  cache_read: cacheReadSegment,
-  cache_write: cacheWriteSegment,
-  cache_rate: cacheRateSegment,
-  extension_statuses: extensionStatusesSegment,
+	model: modelSegment,
+	thinking: thinkingSegment,
+	shell_mode: shellModeSegment,
+	path: pathSegment,
+	git: gitSegment,
+	subagents: subagentsSegment,
+	token_in: tokenInSegment,
+	token_out: tokenOutSegment,
+	token_total: tokenTotalSegment,
+	token_io: tokenIoSegment,
+	token_rate: tokenRateSegment,
+	cost: costSegment,
+	context_pct: contextPctSegment,
+	context_total: contextTotalSegment,
+	time_spent: timeSpentSegment,
+	time: timeSegment,
+	session: sessionSegment,
+	hostname: hostnameSegment,
+	cache_read: cacheReadSegment,
+	cache_write: cacheWriteSegment,
+	cache_rate: cacheRateSegment,
+	extension_statuses: extensionStatusesSegment,
 };
 
 function renderCustomSegment(
-  id: `custom:${string}`,
-  ctx: SegmentContext,
+	id: `custom:${string}`,
+	ctx: SegmentContext,
 ): RenderedSegment {
-  const customItemId = id.slice("custom:".length);
-  const custom = ctx.customItemsById.get(customItemId);
-  if (!custom) return { content: "", visible: false };
+	const customItemId = id.slice("custom:".length);
+	const custom = ctx.customItemsById.get(customItemId);
+	if (!custom) return { content: "", visible: false };
 
-  const rawStatus = ctx.extensionStatuses.get(custom.statusKey);
-  const normalizedStatus = rawStatus
-    ? normalizeExtensionStatusValue(rawStatus)
-    : null;
-  if (!normalizedStatus) {
-    return custom.hideWhenMissing
-      ? { content: "", visible: false }
-      : { content: custom.prefix ?? custom.id, visible: true };
-  }
+	const rawStatus = ctx.extensionStatuses.get(custom.statusKey);
+	const normalizedStatus = rawStatus
+		? normalizeExtensionStatusValue(rawStatus)
+		: null;
+	if (!normalizedStatus) {
+		return custom.hideWhenMissing
+			? { content: "", visible: false }
+			: { content: custom.prefix ?? custom.id, visible: true };
+	}
 
-  let content = normalizedStatus;
-  if (custom.prefix) {
-    content = `${custom.prefix}${SEP_DOT}${content}`;
-  }
-  if (custom.color) {
-    content = applyColor(ctx.theme, custom.color, content);
-  }
+	let content = normalizedStatus;
+	if (custom.prefix) {
+		content = `${custom.prefix}${SEP_DOT}${content}`;
+	}
+	if (custom.color) {
+		content = applyColor(ctx.theme, custom.color, content);
+	}
 
-  return { content, visible: true };
+	return { content, visible: true };
 }
 
 export function renderSegment(
-  id: StatusLineSegmentId,
-  ctx: SegmentContext,
+	id: StatusLineSegmentId,
+	ctx: SegmentContext,
 ): RenderedSegment {
-  if (id.startsWith("custom:")) {
-    return renderCustomSegment(id, ctx);
-  }
+	if (id.startsWith("custom:")) {
+		return renderCustomSegment(id, ctx);
+	}
 
-  const segment = SEGMENTS[id];
-  if (!segment) {
-    return { content: "", visible: false };
-  }
-  return segment.render(ctx);
+	const segment = SEGMENTS[id];
+	if (!segment) {
+		return { content: "", visible: false };
+	}
+	return segment.render(ctx);
 }

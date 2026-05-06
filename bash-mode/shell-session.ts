@@ -2,8 +2,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import type { BashTranscriptStore } from "./transcript.ts";
-import type { ShellSessionState } from "./types.ts";
+import type { BashTranscriptStore } from "./transcript";
+import type { ShellSessionState } from "./types";
 
 const READY_SENTINEL = "__PI_READY__";
 const COMMAND_START_SENTINEL = "__PI_CMD_START__";

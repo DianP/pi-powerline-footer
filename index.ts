@@ -1,55 +1,61 @@
 import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import type { AssistantMessage } from "@mariozechner/pi-ai";
+import {
 	copyToClipboard,
 	type ExtensionAPI,
 	type ReadonlyFooterDataProvider,
 	type Theme,
 } from "@mariozechner/pi-coding-agent";
-import type { AssistantMessage } from "@mariozechner/pi-ai";
 import {
-	isKeyRelease,
-	matchesKey,
 	type AutocompleteProvider,
+	isKeyRelease,
+	type KeyId,
+	matchesKey,
 	type SelectItem,
 	SelectList,
-	truncateToWidth,
 	TUI_KEYBINDINGS,
+	truncateToWidth,
 	visibleWidth,
 } from "@mariozechner/pi-tui";
 import {
-	readFileSync,
-	writeFileSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-} from "node:fs";
-import { join, dirname } from "node:path";
-import { homedir } from "node:os";
-
-import type {
-	ColorScheme,
-	SegmentContext,
-	StatusLinePreset,
-	StatusLineSegmentId,
-} from "./types.js";
-import type { PowerlineConfig } from "./powerline-config.js";
-import { BashTranscriptStore } from "./bash-mode/transcript.ts";
-import {
-	BashCompletionEngine,
 	BashAutocompleteProvider,
+	BashCompletionEngine,
 	getOneOffBashCommandContext,
 	ModeAwareAutocompleteProvider,
 	OneOffBashAutocompleteProvider,
-} from "./bash-mode/completion.ts";
-import { BashModeEditor } from "./bash-mode/editor.ts";
-import { ManagedShellSession } from "./bash-mode/shell-session.ts";
+} from "./bash-mode/completion";
+import { BashModeEditor } from "./bash-mode/editor";
 import {
+	appendProjectHistory,
 	matchHistoryEntries,
 	readGlobalShellHistory,
 	readProjectHistory,
-	appendProjectHistory,
-} from "./bash-mode/history.ts";
-import type { BashModeSettings } from "./bash-mode/types.ts";
-import { getPreset, PRESETS } from "./presets.js";
+} from "./bash-mode/history";
+import { ManagedShellSession } from "./bash-mode/shell-session";
+import { BashTranscriptStore } from "./bash-mode/transcript";
+import type { BashModeSettings } from "./bash-mode/types";
+import { ansi, getFgAnsiCode } from "./colors";
+import { readCoreContextUsage } from "./context-usage";
+import { renderFixedEditorCluster } from "./fixed-editor/cluster";
+import {
+	emergencyTerminalModeReset,
+	TerminalSplitCompositor,
+} from "./fixed-editor/terminal-split";
+import {
+	getGitStatus,
+	invalidateGitBranch,
+	invalidateGitStatus,
+} from "./git-status";
+import { getIcons, SEP_DOT } from "./icons";
+import type { PowerlineConfig } from "./powerline-config";
 import {
 	collectHiddenExtensionStatusKeys,
 	mergeSegmentsWithCustomItems,
@@ -57,53 +63,47 @@ import {
 	nextPowerlineSettingWithPreset,
 	normalizeExtensionStatusValue,
 	parsePowerlineConfig,
-} from "./powerline-config.js";
-import { getSeparator } from "./separators.js";
-import { formatTokens, renderSegment } from "./segments.js";
-import {
-	getGitStatus,
-	invalidateGitStatus,
-	invalidateGitBranch,
-} from "./git-status.js";
-import { ansi, getFgAnsiCode } from "./colors.js";
-import { getIcons, SEP_DOT } from "./icons.ts";
-import {
-	WelcomeComponent,
-	WelcomeHeader,
-	discoverLoadedCounts,
-	getRecentSessions,
-} from "./welcome.js";
-import { createWelcomeDismissScheduler } from "./welcome-dismiss.ts";
-import { createRenderScheduler } from "./render-scheduler.ts";
-import { readCoreContextUsage } from "./context-usage.ts";
-import { renderFixedEditorCluster } from "./fixed-editor/cluster.ts";
-import {
-	emergencyTerminalModeReset,
-	TerminalSplitCompositor,
-} from "./fixed-editor/terminal-split.ts";
-import { getDefaultColors } from "./theme.js";
+} from "./powerline-config";
+import { getPreset, PRESETS } from "./presets";
+import { createRenderScheduler } from "./render-scheduler";
+import { formatTokens, renderSegment } from "./segments";
+import { getSeparator } from "./separators";
 import {
 	isSupportedSuperShortcut,
 	matchesConfiguredShortcut,
 	shortcutConflictKey,
 	shortcutUsesSuper,
-} from "./shortcuts.ts";
+} from "./shortcuts";
+import { getDefaultColors } from "./theme";
+import type {
+	ColorScheme,
+	SegmentContext,
+	StatusLinePreset,
+	StatusLineSegmentId,
+} from "./types";
 import {
-	initVibeManager,
-	onVibeBeforeAgentStart,
-	onVibeAgentStart,
-	onVibeAgentEnd,
-	onVibeToolCall,
-	getVibeTheme,
-	setVibeTheme,
-	getVibeModel,
-	setVibeModel,
-	getVibeMode,
-	setVibeMode,
-	hasVibeFile,
-	getVibeFileCount,
+	discoverLoadedCounts,
+	getRecentSessions,
+	WelcomeComponent,
+	WelcomeHeader,
+} from "./welcome";
+import { createWelcomeDismissScheduler } from "./welcome-dismiss";
+import {
 	generateVibesBatch,
-} from "./working-vibes.js";
+	getVibeFileCount,
+	getVibeMode,
+	getVibeModel,
+	getVibeTheme,
+	hasVibeFile,
+	initVibeManager,
+	onVibeAgentEnd,
+	onVibeAgentStart,
+	onVibeBeforeAgentStart,
+	onVibeToolCall,
+	setVibeMode,
+	setVibeModel,
+	setVibeTheme,
+} from "./working-vibes";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -252,7 +252,7 @@ const APP_RESERVED_SHORTCUTS = [
 ] as const;
 const EXTRA_RESERVED_SHORTCUTS = ["alt+s"] as const;
 const SHORTCUT_MODIFIER_ORDER = ["ctrl", "alt", "super", "shift"] as const;
-const SHORTCUT_MODIFIERS = new Set(SHORTCUT_MODIFIER_ORDER);
+const SHORTCUT_MODIFIERS = new Set<string>(SHORTCUT_MODIFIER_ORDER);
 const SHORTCUT_NAMED_KEYS = new Set([
 	"escape",
 	"esc",
@@ -657,10 +657,7 @@ function readRecentProjectPrompts(cwd: string, limit: number): string[] {
 				entry = JSON.parse(line);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
-				throw new Error(
-					`Failed to parse session file ${filePath}: ${message}`,
-					{ cause: error },
-				);
+				throw new Error(`Failed to parse session file ${filePath}: ${message}`);
 			}
 
 			if (
@@ -802,7 +799,7 @@ function writePowerlineSetting(
 		return false;
 	}
 
-	const writeToProject = Object.hasOwn(projectSettings, "powerline");
+	const writeToProject = "powerline" in projectSettings;
 	const settingsPath = writeToProject
 		? projectSettingsPath
 		: globalSettingsPath;
@@ -849,7 +846,7 @@ function writePowerlineOptionSetting(
 const PRESET_NAMES = Object.keys(PRESETS) as StatusLinePreset[];
 
 function isValidPreset(value: unknown): value is StatusLinePreset {
-	return typeof value === "string" && Object.hasOwn(PRESETS, value);
+	return typeof value === "string" && value in PRESETS;
 }
 
 function normalizePreset(value: unknown): StatusLinePreset | null {
@@ -891,7 +888,7 @@ function normalizeShortcut(value: string): string {
 	const parts = value.trim().toLowerCase().split("+");
 	if (parts.length <= 1) return parts[0] ?? "";
 
-	const modifierRank = new Map(
+	const modifierRank = new Map<string, number>(
 		SHORTCUT_MODIFIER_ORDER.map((modifier, index) => [modifier, index]),
 	);
 	const modifiers = parts
@@ -1336,23 +1333,23 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 	let resolvedShortcuts = resolveShortcutConfig(startupSettings);
 	let bashModeSettings = parseBashModeSettings(startupSettings);
 
-	const enabled = true;
+	let enabled = true;
 	let sessionStartTime = Date.now();
 	let sessionGeneration = 0;
 	let currentCtx: any = null;
 	let footerDataRef: ReadonlyFooterDataProvider | null = null;
-	let getThinkingLevelFn: (() => string) | null = null;
+	let getThinkingLevelFn: (() => string | null) | null = null;
 	let currentThinkingLevel: string | null = null;
 	let liveAssistantUsage: SessionAssistantUsage | null = null;
 	let persistedTokenRate: number | null = null;
 	let isStreaming = false;
 	let tuiRef: any = null;
 	let restoreFooterStatusRepaintHook: (() => void) | null = null;
-	const fixedEditorCompositor: TerminalSplitCompositor | null = null;
-	const fixedStatusContainer: any = null;
-	const fixedEditorContainer: any = null;
-	const fixedWidgetContainerAbove: any = null;
-	const fixedWidgetContainerBelow: any = null;
+	let fixedEditorCompositor: TerminalSplitCompositor | null = null;
+	let fixedStatusContainer: any = null;
+	let fixedEditorContainer: any = null;
+	let fixedWidgetContainerAbove: any = null;
+	let fixedWidgetContainerBelow: any = null;
 	let stashShortcutInputUnsubscribe: (() => void) | null = null;
 	let dismissWelcomeOverlay: (() => void) | null = null;
 	let welcomeHeaderActive = false;
@@ -1368,15 +1365,15 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 	let shellSession: ManagedShellSession | null = null;
 
 	// Cache for the top and secondary powerline widgets.
-	const lastLayoutWidth = 0;
+	let lastLayoutWidth = 0;
 	let lastLayoutResult: {
 		topContent: string;
 		secondaryContent: string;
 	} | null = null;
-	const lastLayoutTimestamp = 0;
+	let lastLayoutTimestamp = 0;
 	let layoutDirty = true;
 	let forceNextLayoutRecompute = false;
-	const lastEditorInputAt = 0;
+	let lastEditorInputAt = 0;
 
 	const getShellPath = () => process.env.SHELL || "/bin/sh";
 	const getShellCwd = () =>
@@ -1577,7 +1574,11 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		items: SelectItem[],
 		maxVisible: number,
 	): Promise<SelectItem | null> {
-		return ctx.ui.custom<SelectItem | null>(
+		const custom = ctx.ui.custom as <T>(
+			factory: (...args: any[]) => any,
+			options?: any,
+		) => Promise<T>;
+		return custom<SelectItem | null>(
 			(
 				tui: any,
 				theme: Theme,
@@ -1659,9 +1660,12 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		bashTranscript = new BashTranscriptStore(bashModeSettings);
 		bashCompletionEngine = new BashCompletionEngine();
 
+		const maybeGetThinkingLevel = (
+			ctx as { getThinkingLevel?: () => string | null }
+		).getThinkingLevel;
 		getThinkingLevelFn =
-			typeof ctx.getThinkingLevel === "function"
-				? () => ctx.getThinkingLevel()
+			typeof maybeGetThinkingLevel === "function"
+				? () => maybeGetThinkingLevel()
 				: null;
 		currentThinkingLevel = getThinkingLevelFn?.() ?? null;
 
@@ -1820,10 +1824,11 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 				liveAssistantUsage = event.message.usage;
 				// Compute token rate from completed message (stable, one-shot).
 				// Prefer the API-reported duration when available (more accurate than wall-clock delta).
+				const messageDuration = (event.message as { duration?: unknown })
+					.duration;
 				const duration: number | null =
-					typeof event.message.duration === "number" &&
-					event.message.duration > 0
-						? event.message.duration
+					typeof messageDuration === "number" && messageDuration > 0
+						? messageDuration
 						: Date.now() - event.message.timestamp;
 				let tokenRate: number | null = null;
 				if (
@@ -2488,7 +2493,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut(bashModeSettings.toggleShortcut, {
+	pi.registerShortcut(bashModeSettings.toggleShortcut as KeyId, {
 		description: "Toggle bash mode",
 		handler: async (ctx) => {
 			if (!enabled || !ctx.hasUI) return;
@@ -2504,7 +2509,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut(resolvedShortcuts.stashHistory, {
+	pi.registerShortcut(resolvedShortcuts.stashHistory as KeyId, {
 		description: "Open prompt history picker",
 		handler: async (ctx) => {
 			if (!enabled || !ctx.hasUI) return;
@@ -2512,7 +2517,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut(resolvedShortcuts.copyEditor, {
+	pi.registerShortcut(resolvedShortcuts.copyEditor as KeyId, {
 		description: "Copy full editor text",
 		handler: async (ctx) => {
 			if (!enabled || !ctx.hasUI) return;
@@ -2524,7 +2529,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut(resolvedShortcuts.cutEditor, {
+	pi.registerShortcut(resolvedShortcuts.cutEditor as KeyId, {
 		description: "Cut full editor text",
 		handler: async (ctx) => {
 			if (!enabled || !ctx.hasUI) return;
@@ -2539,7 +2544,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 	});
 
 	for (const { shortcutKey, description, action } of CHAT_JUMP_SHORTCUTS) {
-		pi.registerShortcut(resolvedShortcuts[shortcutKey], {
+		pi.registerShortcut(resolvedShortcuts[shortcutKey] as KeyId, {
 			description,
 			handler: async (ctx) => {
 				if (!enabled || !ctx.hasUI) return;
@@ -3614,7 +3619,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 						}),
 					},
 				)
-				.catch((error) => {
+				.catch((error: unknown) => {
 					console.debug("[powerline-footer] Welcome overlay failed:", error);
 				});
 		}, 100);

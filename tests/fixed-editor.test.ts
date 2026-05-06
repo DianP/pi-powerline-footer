@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { TUI, visibleWidth } from "@mariozechner/pi-tui";
-import { CURSOR_MARKER, renderFixedEditorCluster } from "../fixed-editor/cluster.ts";
+import { CURSOR_MARKER, renderFixedEditorCluster } from "../fixed-editor/cluster";
 import {
   buildFixedClusterPaint,
   emergencyTerminalModeReset,
@@ -11,7 +11,7 @@ import {
   resetScrollRegion,
   setScrollRegion,
   TerminalSplitCompositor,
-} from "../fixed-editor/terminal-split.ts";
+} from "../fixed-editor/terminal-split";
 
 class FakeTerminal {
   columns = 40;

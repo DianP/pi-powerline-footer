@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { KEYBINDINGS } from "/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/keybindings.js";
+import { KEYBINDINGS } from "/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/keybindings";
 import {
   isSupportedSuperShortcut,
   matchesConfiguredShortcut,
   shortcutConflictKey,
-} from "../shortcuts.ts";
+} from "../shortcuts";
 
-const source = readFileSync(new URL("../index.ts", import.meta.url), "utf-8");
+const source = readFileSync(new URL("../index", import.meta.url), "utf-8");
 
 const powerlineShortcutKeys = new Set([
   "stashHistory",

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderSegment } from "../segments.ts";
-import type { ColorScheme, SegmentContext, ThemeLike } from "../types.ts";
+import { renderSegment } from "../segments";
+import type { ColorScheme, SegmentContext, ThemeLike } from "../types";
 
 function hexAnsi(hex: `#${string}`): string {
   const value = hex.slice(1);

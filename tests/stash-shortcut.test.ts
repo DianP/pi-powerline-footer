@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const source = readFileSync(new URL("../index.ts", import.meta.url), "utf-8");
+const source = readFileSync(new URL("../index", import.meta.url), "utf-8");
 
 test("stash shortcut supports macOS Option+S character input", () => {
   assert.match(source, /isKeyRelease, matchesKey, type AutocompleteProvider/);

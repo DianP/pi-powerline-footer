@@ -3,7 +3,7 @@ import { join, basename } from "node:path";
 import { homedir as osHomedir } from "node:os";
 import type { Component } from "@mariozechner/pi-tui";
 import { truncateToWidth as tuiTruncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
-import { ansi, fgOnly, getFgAnsiCode } from "./colors.js";
+import { ansi, fgOnly, getFgAnsiCode } from "./colors";
 
 export interface RecentSession {
   name: string;
@@ -431,8 +431,8 @@ export function discoverLoadedCounts(): LoadedCounts {
 
             if (stats.isDirectory()) {
               if (
-                existsSync(join(entryPath, "index.ts")) ||
-                existsSync(join(entryPath, "index.js")) ||
+                existsSync(join(entryPath, "index")) ||
+                existsSync(join(entryPath, "index")) ||
                 existsSync(join(entryPath, "package.json"))
               ) {
                 if (!countedExtensions.has(entry)) {
@@ -440,8 +440,8 @@ export function discoverLoadedCounts(): LoadedCounts {
                   extensions++;
                 }
               }
-            } else if ((entry.endsWith(".ts") || entry.endsWith(".js")) && !entry.startsWith(".")) {
-              const ext = entry.endsWith(".ts") ? ".ts" : ".js";
+            } else if ((entry.endsWith("") || entry.endsWith("")) && !entry.startsWith(".")) {
+              const ext = entry.endsWith("") ? "" : "";
               const name = basename(entry, ext);
               if (!countedExtensions.has(name)) {
                 countedExtensions.add(name);

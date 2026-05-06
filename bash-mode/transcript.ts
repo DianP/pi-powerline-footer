@@ -1,4 +1,4 @@
-import type { BashCommandRecord, BashModeSettings, BashTranscriptSnapshot } from "./types.ts";
+import type { BashCommandRecord, BashModeSettings, BashTranscriptSnapshot } from "./types";
 
 function byteLength(value: string): number {
   return Buffer.byteLength(value, "utf8");

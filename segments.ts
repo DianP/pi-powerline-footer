@@ -1,11 +1,11 @@
 import { hostname as osHostname } from "node:os";
 import { basename } from "node:path";
-import { getIcons, getThinkingText, SEP_DOT } from "./icons.ts";
+import { getIcons, getThinkingText, SEP_DOT } from "./icons";
 import {
 	normalizeCompactExtensionStatus,
 	normalizeExtensionStatusValue,
-} from "./powerline-config.ts";
-import { applyColor, fg, rainbow } from "./theme.ts";
+} from "./powerline-config";
+import { applyColor, fg, rainbow } from "./theme";
 import type {
 	BuiltinStatusLineSegmentId,
 	RenderedSegment,
@@ -13,7 +13,7 @@ import type {
 	SemanticColor,
 	StatusLineSegment,
 	StatusLineSegmentId,
-} from "./types.ts";
+} from "./types";
 
 function color(
 	ctx: SegmentContext,

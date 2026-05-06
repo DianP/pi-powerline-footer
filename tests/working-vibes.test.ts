@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync }
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const FAUX_PROVIDER_PATH = "/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-ai/dist/providers/faux.js";
+const FAUX_PROVIDER_PATH = "/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-ai/dist/providers/faux";
 
 function ensurePiModuleLinks(): { cleanup: () => void } {
   const nodeModulesDir = join(process.cwd(), "node_modules", "@mariozechner");
@@ -45,7 +45,7 @@ test("generateVibesBatch includes a system prompt so faux providers can return t
 
   try {
     const { fauxAssistantMessage, registerFauxProvider } = await import(FAUX_PROVIDER_PATH);
-    const { generateVibesBatch, initVibeManager, setVibeModel } = await import("../working-vibes.ts");
+    const { generateVibesBatch, initVibeManager, setVibeModel } = await import("../working-vibes");
 
     const registration = registerFauxProvider({
       provider: "test-provider",
@@ -107,7 +107,7 @@ test("on-demand vibe generation includes a system prompt for providers that requ
 
   try {
     const { fauxAssistantMessage, registerFauxProvider } = await import(FAUX_PROVIDER_PATH);
-    const { initVibeManager, onVibeAgentStart, onVibeBeforeAgentStart, setVibeModel, setVibeTheme } = await import("../working-vibes.ts");
+    const { initVibeManager, onVibeAgentStart, onVibeBeforeAgentStart, setVibeModel, setVibeTheme } = await import("../working-vibes");
 
     const registration = registerFauxProvider({
       provider: "test-provider",
@@ -174,7 +174,7 @@ test("generateVibesBatch preserves provider errors instead of reporting an empty
 
   try {
     const { fauxAssistantMessage, registerFauxProvider } = await import(FAUX_PROVIDER_PATH);
-    const { generateVibesBatch, initVibeManager, setVibeModel } = await import("../working-vibes.ts");
+    const { generateVibesBatch, initVibeManager, setVibeModel } = await import("../working-vibes");
 
     const registration = registerFauxProvider({
       provider: "test-provider",

@@ -1,5 +1,5 @@
-import { getDefaultColors } from "./theme";
-import type { ColorScheme, PresetDef, StatusLinePreset } from "./types";
+import { getDefaultColors } from "./theme.js";
+import type { ColorScheme, PresetDef, StatusLinePreset } from "./types.js";
 
 // Get base colors from theme.ts (single source of truth)
 const DEFAULT_COLORS: ColorScheme = getDefaultColors();

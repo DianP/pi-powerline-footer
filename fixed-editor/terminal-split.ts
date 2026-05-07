@@ -1,6 +1,6 @@
 import { isKeyRelease, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
-import { matchesConfiguredShortcut } from "../shortcuts";
-import type { FixedEditorClusterRender } from "./cluster";
+import { matchesConfiguredShortcut } from "../shortcuts.ts";
+import type { FixedEditorClusterRender } from "./cluster.ts";
 
 export interface TerminalLike {
   columns: number;

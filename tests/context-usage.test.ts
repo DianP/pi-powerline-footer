@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readCoreContextUsage } from "../context-usage";
+import { readCoreContextUsage } from "../context-usage.ts";
 
 test("readCoreContextUsage returns Pi context estimates for branch summaries", () => {
   const usage = readCoreContextUsage({

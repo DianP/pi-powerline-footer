@@ -1,5 +1,5 @@
-import type { SeparatorDef, StatusLineSeparatorStyle } from "./types";
-import { getSeparatorChars } from "./icons";
+import type { SeparatorDef, StatusLineSeparatorStyle } from "./types.js";
+import { getSeparatorChars } from "./icons.js";
 
 export function getSeparator(style: StatusLineSeparatorStyle): SeparatorDef {
   const chars = getSeparatorChars();

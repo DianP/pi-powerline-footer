@@ -26,7 +26,7 @@
     "url": "git+https://github.com/nicobailon/pi-powerline-footer.git"
   },
   "scripts": {
-    "test": "node --experimental-strip-types --test tests/**/*.test.ts"
+    "test": "node --experimental-strip-types --import ./tests/ensure-symlinks.ts --test tests/**/*.test.ts"
   },
   "pi": {
     "extensions": [
